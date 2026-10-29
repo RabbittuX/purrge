@@ -32,7 +32,17 @@ out = {"summary": "测试总结", "items": [{"id": it["id"], "tier": "primary", 
 mode = os.environ.get("FAKE_MODE", "ok")
 if mode == "fail":
     sys.stderr.write("boom"); sys.exit(1)
-print(json.dumps({"result": "这是结果：" + json.dumps(out, ensure_ascii=False)}, ensure_ascii=False))
+result = {"type": "result", "subtype": "success", "result": "这是结果：" + json.dumps(out, ensure_ascii=False)}
+if mode == "verbose":    # Claude Code 开了 verbose：输出整段消息数组
+    print(json.dumps([{"type": "system", "subtype": "init"}, {"type": "assistant", "message": {}}, result], ensure_ascii=False))
+elif mode == "verbose-noresult":
+    print(json.dumps([{"type": "system", "subtype": "init"}, {"type": "assistant", "message": {}}]))
+elif mode == "scalar":
+    print(json.dumps("OK"))
+elif mode == "text":
+    print("OK")
+else:
+    print(json.dumps(result, ensure_ascii=False))
 ''',
     # 假的 codex：默认模型报"不支持"，换成缓存里的模型才成功
     "codex": r'''#!/usr/bin/env python3
@@ -234,6 +244,18 @@ class TestClassify(Base):
         '''))
         self.assertEqual(r, {"by": "rules", "tiers": {"c001": "primary", "c002": "optional", "c003": "keep"}})
 
+    def test_ai_verbose_array(self):
+        self.e.extra["FAKE_MODE"] = "verbose"
+        r = self.e.run(textwrap.dedent(self.CAND) + textwrap.dedent(r'''
+        from common import load_config, save_config
+        import shutil
+        c = load_config(); c.update(aiEngine="claude", claudePath=shutil.which("claude")); save_config(c)
+        from classify import classify
+        rv = classify(cand, log=lambda *a: None)
+        print("@@" + json.dumps({"by": rv["judgedBy"], "tiers": {x["id"]: x["tier"] for x in rv["items"]}, "title": rv["items"][0]["title"]}))
+        '''))
+        self.assertEqual(r, {"by": "ai", "tiers": {"c001": "primary", "c002": "optional", "c003": "keep"}, "title": "AI:c001"})
+
     def test_no_engine(self):
         r = self.e.run(textwrap.dedent(self.CAND) + textwrap.dedent(r'''
         from classify import classify
@@ -256,6 +278,20 @@ class TestEngines(Base):
         self.assertEqual(r, [True, "good-model", ""])
         ex = [c["args"] for c in self.e.calls() if c["bin"] == "codex" and "exec" in c["args"]]
         self.assertTrue(all(a[a.index("--sandbox") + 1] == "read-only" and "--ephemeral" in a for a in ex), "Codex 必须只读、不留会话")
+
+    def test_claude_output_formats(self):
+        """Claude 的 json 输出：对象、verbose 数组、数组里没有 result、非对象、纯文本，都不能崩。"""
+        got = {}
+        for mode in ("ok", "verbose", "verbose-noresult", "scalar", "text"):
+            self.e.extra["FAKE_MODE"] = mode
+            got[mode] = self.e.run(r'''
+            import engines, shutil
+            cfg = {"aiEngine": "claude", "claudePath": shutil.which("claude"), "claudeModel": ""}
+            ok, model, err = engines.test(cfg, log=lambda *a: None)
+            print("@@" + json.dumps([ok, err]))
+            ''')
+        self.assertEqual(got, {"ok": [True, ""], "verbose": [True, ""], "verbose-noresult": [False, ""],
+                               "scalar": [False, ""], "text": [True, ""]})
 
     def test_names_and_find(self):
         r = self.e.run(r'''

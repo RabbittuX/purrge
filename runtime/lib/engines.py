@@ -300,9 +300,13 @@ def _ask_once(engine, path, prompt, model, timeout):
         if p.returncode != 0 and not p.stdout.strip():
             raise AIError((p.stderr or p.stdout)[-400:])
         try:
-            return json.loads(p.stdout).get("result", "")
+            data = json.loads(p.stdout)
         except json.JSONDecodeError:
             return p.stdout
+        # Claude Code 开了 verbose 时，json 模式输出整段消息数组，结果在最后一条 type=result 里
+        if isinstance(data, list):
+            data = next((d for d in reversed(data) if isinstance(d, dict) and d.get("type") == "result"), {})
+        return data.get("result", "") if isinstance(data, dict) else ""
     # Codex：只读沙箱、不留会话，在空目录里运行，避免读到别的项目说明
     with _tmpdir() as tmp:
         out = Path(tmp) / "answer.txt"
