@@ -229,6 +229,26 @@ def cmd_post_update(args):
     print(f"自检通过：Purrge {VERSION}")
 
 
+def _delete_after_exit(path, delay=2.0):
+    """删除当前正在运行的 purrge.cmd：等这条命令退出后，由后台进程删掉。
+    不用 cmd + ping 当计时器：ICMP 被安全软件拦截或网络栈异常时，ping 会多花好几秒
+    （实测 ping -n 3 127.0.0.1 需要 9 秒），删除时机不可控。"""
+    code = ("import os, sys, time\n"
+            "time.sleep(float(sys.argv[1]))\n"
+            "for _ in range(10):\n"
+            "    try:\n"
+            "        os.remove(sys.argv[2])\n"
+            "        break\n"
+            "    except FileNotFoundError:\n"
+            "        break\n"
+            "    except OSError:\n"          # 父进程还没放开文件，稍后重试
+            "        time.sleep(0.5)\n")
+    subprocess.Popen([sys.executable, "-c", code, str(delay), str(path)],
+                     creationflags=0x00000008 | 0x08000000,   # DETACHED_PROCESS | CREATE_NO_WINDOW
+                     close_fds=True, stdin=subprocess.DEVNULL,
+                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
 def cmd_uninstall(args):
     if os.environ.get("PURRGE_TEST_NO_MONITOR"):     # 测试专用：不碰真实的后台任务
         (DG_HOME / "monitor.test").unlink(missing_ok=True)
@@ -240,9 +260,7 @@ def cmd_uninstall(args):
     if sys.platform == "win32" and WIN_CLI.exists():
         # Windows 的 purrge 命令是 WindowsApps 里的 purrge.cmd，而且此刻正在运行：直接删掉，cmd 会报 "The batch file cannot be found."
         # 所以交给一个后台小任务，等这次命令结束后再删
-        # 整行原样交给 cmd（用列表的话 Python 会把引号转义成 cmd 不认识的 \"）
-        subprocess.Popen(f'cmd /c ping -n 3 127.0.0.1 >nul & del /f /q "{WIN_CLI}"',
-                         creationflags=0x00000008 | 0x08000000, close_fds=True)   # DETACHED_PROCESS | CREATE_NO_WINDOW
+        _delete_after_exit(WIN_CLI)
     for d in SKILL_DIRS.values():
         shutil.rmtree(d, ignore_errors=True)
     if "--purge" in args:
