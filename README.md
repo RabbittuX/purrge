@@ -20,6 +20,10 @@
 
 <br>
 
+## 🆕 v0.3.3 更新内容
+
+- **修复**：Windows 上「Edge 浏览器缓存」一直清理不掉：它在受保护的 `%LOCALAPPDATA%/Microsoft` 文件夹里，被保护名单整体挡住了（[#4](https://github.com/RabbittuX/purrge/pull/4)）。现在只放行 Edge 的 Cache 和 Code Cache 文件夹，Edge 的密码、Cookies、书签以及 Outlook、Teams、OneDrive 等数据仍然受保护。感谢 @NaIWaniubi 报告并修复。
+
 ## 🆕 v0.3.2 更新内容
 
 - **修复**：Claude Code 开启 verbose（详细输出）时，安装的连接测试和 `purrge scan` 的 AI 判断会崩溃（[#1](https://github.com/RabbittuX/purrge/issues/1)）。感谢 @jiangwanyutao 报告并提供修复方案。
