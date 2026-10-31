@@ -1,4 +1,5 @@
 """purrge 公共工具：路径、配置、磁盘空间、目录大小。"""
+import fnmatch
 import json
 import os
 import shutil
@@ -79,15 +80,39 @@ def human(n):
         n /= 1024
 
 
+def _resolved(raw):
+    p = expand(raw)
+    try:
+        return p.resolve()
+    except OSError:
+        return p
+
+
+def _exempt(path, rules):
+    """规则库 protectExempt 里明确写出的缓存目录（* 只匹配一级目录），可以穿过宽泛的保护目录。"""
+    for raw in rules.get("protectExempt", []):
+        parts = expand(raw).parts
+        n = next((i for i, s in enumerate(parts) if any(c in s for c in "*?[")), len(parts))
+        pat = _resolved(str(Path(*parts[:n]))).parts + parts[n:]
+        if len(path.parts) >= len(pat) and all(
+                fnmatch.fnmatch(a, b) if i >= len(pat) - len(parts[n:]) else os.path.normcase(a) == os.path.normcase(b)
+                for i, (a, b) in enumerate(zip(path.parts, pat))):
+            return True
+    return False
+
+
 def is_protected(path, cfg, rules):
     path = Path(path).resolve()
-    for raw in list(rules.get("protected", [])) + list(cfg.get("protect", [])):
-        prot = expand(raw)
-        try:
-            prot = prot.resolve()
-        except OSError:
-            pass
+    for raw in cfg.get("protect", []):           # 用户自己加的保护永远优先
+        prot = _resolved(raw)
         if path == prot or prot in path.parents or path in prot.parents:
+            return True
+    exempt = _exempt(path, rules)
+    for raw in rules.get("protected", []):
+        prot = _resolved(raw)
+        if path == prot or path in prot.parents:
+            return True
+        if prot in path.parents and not exempt:  # 豁免只放行「上层整体保护」，自身或里面受保护的照旧
             return True
     return False
 

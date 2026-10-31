@@ -606,6 +606,67 @@ class TestCLI(Base):
             self.assertIn(k, s)
 
 
+class TestWindowsRules(Base):
+    """保护名单不能把规则库里的缓存目录一起盖掉（否则规则永远不生效）。"""
+
+    @unittest.skipUnless(WIN, "Windows 规则只在 Windows 上生效")
+    def test_edge_cache_not_shadowed(self):
+        r = self.e.run(r'''
+        from common import expand, is_protected, load_config, load_rules
+        rules, cfg = load_rules(), load_config()
+        edge = next(x for x in rules["rules"] if x["id"] == "edge-cache")
+        out = {p.split("/")[-1]: is_protected(expand(p.replace("*", "Default")), cfg, rules) for p in edge["paths"]}
+        out.update({
+            "dpapi": is_protected(expand("%LOCALAPPDATA%/Microsoft/Credentials"), cfg, rules),
+            "appdata_ms": is_protected(expand("%APPDATA%/Microsoft"), cfg, rules),
+            "chrome": is_protected(expand("%LOCALAPPDATA%/Google/Chrome/User Data/Default/Cache"), cfg, rules),
+            "system": is_protected(expand("%SystemRoot%"), cfg, rules)})
+        print("@@" + json.dumps(out))
+        ''')
+        self.assertEqual(r, {"Cache": False, "Code Cache": False, "dpapi": True,
+                             "appdata_ms": True, "chrome": False, "system": True})
+
+    @unittest.skipUnless(WIN, "Windows 规则只在 Windows 上生效")
+    def test_edge_profile_state_still_protected(self):
+        r = self.e.run(r'''
+        from common import expand, is_protected, load_config, load_rules
+        rules, cfg = load_rules(), load_config()
+        ud = "%LOCALAPPDATA%/Microsoft/Edge/User Data/"
+        names = ["Profile 1/Cache", "Default/Login Data", "Profile 1/Login Data", "Default/Cookies", "Default/Bookmarks",
+                 "Local State", "Default", "", "../../Outlook", "../../Windows/UsrClass.dat"]
+        print("@@" + json.dumps({n: is_protected(expand(ud + n), cfg, rules) for n in names}))
+        ''')
+        self.assertEqual(r, {"Profile 1/Cache": False, **{n: True for n in list(r)[1:]}})
+
+    def test_protect_exempt(self):
+        """protectExempt 只放行宽泛的上层保护：用户保护、自身/内部受保护、软链接指向别处都照旧。"""
+        r = self.e.run(r'''
+        import os
+        from pathlib import Path
+        from common import is_protected
+        ms = Path.home() / "AppData/Local/Microsoft"; ud = ms / "Edge/User Data"
+        for d in ["Default/Cache/data", "Profile 1/Code Cache", "Default/Cache2", "Default/Network"]:
+            (ud / d).mkdir(parents=True)
+        (ms / "Outlook").mkdir()
+        (ud / "Evil").mkdir()
+        if os.name != "nt":                        # Windows 建软链接要管理员/开发者模式
+            os.symlink(ms / "Outlook", ud / "Evil/Cache", target_is_directory=True)
+        rules = {"protected": [str(ms), str(ud / "Default/Cache/keep")],
+                 "protectExempt": [str(ud / "*/Cache"), str(ud / "*/Code Cache")]}
+        P = lambda n, cfg={}: is_protected(ud / n, cfg, rules)
+        print("@@" + json.dumps({
+            "default_cache": P("Default/Cache/data"), "profile1_code": P("Profile 1/Code Cache"),
+            "cache2": P("Default/Cache2"), "network": P("Default/Network"), "profile": P("Default"),
+            "local_state": P("Local State"), "outlook": is_protected(ms / "Outlook", {}, rules),
+            "keep_inside": P("Default/Cache/keep"), "cache_parent_of_keep": P("Default/Cache"),
+            "symlink_escape": P("Evil/Cache") if os.name != "nt" else True,
+            "user_wins": P("Profile 1/Code Cache", {"protect": [str(ud / "Profile 1")]})}))
+        ''')
+        self.assertEqual(r, {"default_cache": False, "profile1_code": False, "cache2": True, "network": True,
+                             "profile": True, "local_state": True, "outlook": True, "keep_inside": True,
+                             "cache_parent_of_keep": True, "symlink_escape": True, "user_wins": True})
+
+
 class TestScanAndServer(Base):
     def test_scan_shape(self):
         (self.e.home / "Library/Caches/Big").mkdir(parents=True)

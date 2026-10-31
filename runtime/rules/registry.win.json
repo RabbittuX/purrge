@@ -41,5 +41,8 @@
     "~/OneDrive", "%APPDATA%/Microsoft", "%LOCALAPPDATA%/Microsoft",
     "%LOCALAPPDATA%/JianyingPro/User Data/Projects", "%LOCALAPPDATA%/CapCut/User Data/Projects",
     "%LOCALAPPDATA%/Google/Chrome/User Data/Default/Login Data", "%SystemRoot%", "%ProgramFiles%", "%ProgramFiles(x86)%", "%ProgramData%"
+  ],
+  "protectExempt": [
+    "%LOCALAPPDATA%/Microsoft/Edge/User Data/*/Cache", "%LOCALAPPDATA%/Microsoft/Edge/User Data/*/Code Cache"
   ]
 }
