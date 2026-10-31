@@ -20,6 +20,10 @@
 
 <br>
 
+## 🆕 v0.3.4 更新内容
+
+- **修复**：Windows 上卸载后，`purrge` 命令在部分电脑上要过 10 秒左右才被删除，这期间运行 `purrge` 会报错（[#3](https://github.com/RabbittuX/purrge/pull/3)）。现在卸载结束约 2 秒后就会删除。感谢 @NaIWaniubi 报告并修复。
+
 ## 🆕 v0.3.3 更新内容
 
 - **修复**：Windows 上「Edge 浏览器缓存」一直清理不掉：它在受保护的 `%LOCALAPPDATA%/Microsoft` 文件夹里，被保护名单整体挡住了（[#4](https://github.com/RabbittuX/purrge/pull/4)）。现在只放行 Edge 的 Cache 和 Code Cache 文件夹，Edge 的密码、Cookies、书签以及 Outlook、Teams、OneDrive 等数据仍然受保护。感谢 @NaIWaniubi 报告并修复。
