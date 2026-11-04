@@ -130,7 +130,7 @@ def cmd_check(args):
     STATE.write_text(json.dumps(st))
     choice = ask_user(free)
     if choice == "scan":
-        subprocess.Popen([sys.executable, str(Path(__file__).resolve()), "run"], start_new_session=True,
+        subprocess.Popen([sys.executable, "-u", str(Path(__file__).resolve()), "run"], start_new_session=True,
                          stdout=open(DG_HOME / "run.log", "a"), stderr=subprocess.STDOUT)
 
 
@@ -138,7 +138,7 @@ def cmd_run(args):
     if "--background" in args:   # 立即返回，扫描完成后自动打开审查页面
         rest = [a for a in args if a != "--background"]
         log = open(DG_HOME / "run.log", "a")
-        subprocess.Popen([sys.executable, str(Path(__file__).resolve()), "run", *rest], start_new_session=True,
+        subprocess.Popen([sys.executable, "-u", str(Path(__file__).resolve()), "run", *rest], start_new_session=True,
                          stdout=log, stderr=subprocess.STDOUT)
         print("已开始扫描（约 1～2 分钟：扫描 10 秒 + AI 判断），完成后会自动在浏览器打开审查页面。"
               f"进度日志：{DG_HOME / 'run.log'}")
