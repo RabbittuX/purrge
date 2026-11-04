@@ -230,7 +230,12 @@ def uninstall_monitor(label):
 
 
 def monitor_loaded(label):
-    return _run(["schtasks", "/Query", "/TN", _task_name(label)]).returncode == 0
+    if _run(["schtasks", "/Query", "/TN", _task_name(label)]).returncode == 0:
+        return True
+    # 没有计划任务权限、或任务计划服务繁忙时，schtasks 也会返回非 0，
+    # 不能据此断定「没装」：退回到任务文件本身判断。
+    tasks = Path(os.environ.get("SystemRoot", r"C:\Windows")) / "System32" / "Tasks" / _task_name(label)
+    return tasks.exists() or monitor_file(label).exists()
 
 
 def full_disk_access():
