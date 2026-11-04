@@ -72,7 +72,11 @@ def serve(run_dir, open_browser=True, log=print):
             body = json.loads(self.rfile.read(n) or b"{}")
             if self.path == "/api/clean":
                 ids = [str(i) for i in body.get("ids", [])]
-                out = clean(review, ids, log=log)
+                try:
+                    out = clean(review, ids, log=log)
+                except Exception as e:   # 兜底：哪怕整批崩了也要回 JSON，不能只回 500 让前端一直转圈（#6）
+                    log(f"clean failed: {e!r}")
+                    return self._send(200, {"results": [], "freedBytes": 0, "error": f"清理失败：{e}"})
                 for r in out["results"]:
                     r["message"] = localize(r.get("message", ""))
                 (run_dir / "result.json").write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
