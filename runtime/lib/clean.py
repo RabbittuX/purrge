@@ -63,8 +63,8 @@ def clean(review, ids, log=print):
             else:
                 _rm(path, errors)
                 res["status"] = "deleted"
-        except OSError as e:
-            res["status"], res["message"] = "failed", f"失败：{e.strerror or e}"
+        except Exception as e:      # 单项失败也不能中断整批（#6：AttributeError 曾绕过 except OSError）
+            res["status"], res["message"] = "failed", f"失败：{getattr(e, 'strerror', None) or e}"
             continue
         after, _ = du_bytes(path) if os.path.exists(path) else (0, False)
         if res["status"] == "trashed":
