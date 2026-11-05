@@ -323,6 +323,10 @@ def _ask_once(engine, path, prompt, model, timeout):
         # Claude Code 开了 verbose 时，json 模式输出整段消息数组，结果在最后一条 type=result 里
         if isinstance(data, list):
             data = next((d for d in reversed(data) if isinstance(d, dict) and d.get("type") == "result"), {})
+        if isinstance(data, dict) and data.get("is_error"):
+            # 没登录 / 鉴权失败时 claude 也输出一条 result（is_error=true，result 是报错文字，退出码 1），
+            # 不能把这句话当成 AI 的回答（#8）
+            raise AIError(str(data.get("result") or "Claude Code 返回了错误")[:400])
         return data.get("result", "") if isinstance(data, dict) else ""
     # Codex：只读沙箱、不留会话，在空目录里运行，避免读到别的项目说明
     with _tmpdir() as tmp:
