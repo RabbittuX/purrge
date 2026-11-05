@@ -14,67 +14,69 @@
 
 <br><br>
 
-<a href="https://static.yellowrabbit.online/purrge/index.html#download"><img src="https://img.shields.io/badge/%E4%B8%8B%E8%BD%BD%20Mac%20%E7%89%88-%E5%89%8D%E5%BE%80%E5%AE%98%E7%BD%91-f0882a?style=for-the-badge&logo=apple&logoColor=white" alt="下载 Mac 版（前往官网）" height="40"></a>
+<a href="https://static.yellowrabbit.online/purrge/index.html#download"><img src="https://img.shields.io/badge/%E4%B8%8B%E8%BD%BD%20Mac%20%E7%89%88-%E5%89%8D%E5%BE%80%E5%AE%98%E7%BD%91-f0882a?style=for-the-badge&logo=apple&logoColor=white" alt="下载 Mac 版（前往官网）" height="44"></a>
 
 <sub>Mac 应用安装包只在<a href="https://static.yellowrabbit.online/purrge/index.html#download">官网</a>发布 · 命令行版安装方法见下方<a href="#-安装">「安装」</a></sub>
 
 <br>
 
-<img src="docs/screenshots/review.png" alt="Purrge 审查页" width="100%">
+<a href="#-mac-应用10-新发布">Mac 应用</a> · <a href="#-核心功能">核心功能</a> · <a href="#-安装">安装</a> · <a href="#-使用方法">使用方法</a> · <a href="#-安全机制">安全机制</a> · <a href="#-更新日志">更新日志</a>
 
 </div>
-
-<br>
 
 ## 🍎 Mac 应用（1.0 新发布）
 
 不想用终端？Purrge for Mac 把命令行版的功能做成了图形界面应用，下载打开就能用：
 
-- **菜单栏 + 桌面悬浮球**：扫描和 AI 判断的进度随时看得到，空间不够时悬浮球亮起提醒
-- **守护**：后台定时检查剩余空间，在线、暂停、多久后再检查一目了然，每次检查和扫描都有记录
-- **在应用里切换 AI**：Claude Code、Codex、WorkBuddy、DeepSeek，安装和登录都在应用里一步步完成，不用开终端
-- **白名单、深色模式、开机自启**，设置和命令行版共用
+<table>
+<tr>
+<td width="50%" valign="top">
 
-macOS 13 及以上 · Apple 芯片与 Intel 通用 · 不收费
+**🖥️ 菜单栏 + 桌面悬浮球**
 
-**👉 [前往官网下载 Mac 版](https://static.yellowrabbit.online/purrge/index.html#download)**
+扫描和 AI 判断的进度随时看得到，空间不够时悬浮球亮起提醒
 
-> 安装包**只在官网发布**，GitHub 上不提供下载；其他地方的同名安装包请不要安装。
-> Mac 应用目前没有开源，本仓库是命令行版（macOS / Windows）的源码。
-> 第一次打开时 macOS 会提示「无法验证开发者」，下载时官网会显示「安装必读」，按步骤允许一次即可。
+</td>
+<td width="50%" valign="top">
 
-## 🆕 v0.3.5 更新内容
+**🛡️ 守护**
 
-- **修复**：中文 Windows 上勾选「需要你决定」的项目点「清理」后，页面一直转圈收不到结果（[#6](https://github.com/RabbittuX/purrge/issues/6)）。现在单项失败不会中断整批清理，出错时页面会给出提示；已经移进回收站的项目会如实显示。感谢 @lih288504-design 报告、@Su-1003 修复。
-- **修复**：Claude Code 未登录时，连接测试仍显示「连接正常」，扫描时悄悄改用规则判断；后台扫描时 `run.log` 一直是空的；Windows 上找不到 Codex / Claude 桌面版自带的命令行（[#8](https://github.com/RabbittuX/purrge/issues/8)、[#9](https://github.com/RabbittuX/purrge/pull/9)）。感谢 @Su-1003 报告并修复。
-- **修复**：Windows 笔记本拔掉电源后后台检查会停止，现在用电池时也照常检查（[#8](https://github.com/RabbittuX/purrge/issues/8)）。
-- **新增**：可以额外扫描其他目录或分区，比如 D 盘的项目文件夹：`purrge config scanDirs add D:\项目`（[#5](https://github.com/RabbittuX/purrge/issues/5)）。在这些目录里找到的项目只会列为「需要你决定」。感谢 @oopsdoes 的建议。
+后台定时检查剩余空间，在线、暂停、多久后再检查一目了然，每次检查和扫描都有记录
 
-## 🆕 v0.3.4 更新内容
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
 
-- **修复**：Windows 上卸载后，`purrge` 命令在部分电脑上要过 10 秒左右才被删除，这期间运行 `purrge` 会报错（[#3](https://github.com/RabbittuX/purrge/pull/3)）。现在卸载结束约 2 秒后就会删除。感谢 @NaIWaniubi 报告并修复。
+**🧠 在应用里切换 AI**
 
-## 🆕 v0.3.3 更新内容
+Claude Code、Codex、WorkBuddy、DeepSeek，安装和登录都在应用里一步步完成，不用开终端
 
-- **修复**：Windows 上「Edge 浏览器缓存」一直清理不掉：它在受保护的 `%LOCALAPPDATA%/Microsoft` 文件夹里，被保护名单整体挡住了（[#4](https://github.com/RabbittuX/purrge/pull/4)）。现在只放行 Edge 的 Cache 和 Code Cache 文件夹，Edge 的密码、Cookies、书签以及 Outlook、Teams、OneDrive 等数据仍然受保护。感谢 @NaIWaniubi 报告并修复。
+</td>
+<td width="50%" valign="top">
 
-## 🆕 v0.3.2 更新内容
+**⚙️ 白名单、深色模式、开机自启**
 
-- **修复**：Claude Code 开启 verbose（详细输出）时，安装的连接测试和 `purrge scan` 的 AI 判断会崩溃（[#1](https://github.com/RabbittuX/purrge/issues/1)）。感谢 @jiangwanyutao 报告并提供修复方案。
+设置和命令行版共用
 
-## 🆕 v0.3.1 更新内容
+</td>
+</tr>
+</table>
 
-- **Windows 两行命令安装，不需要网址**：Purrge 已发布到微软官方的 PowerShell Gallery，`Install-Module Purrge` + `Install-Purrge` 即可安装；模块自带完整代码，安装时不再访问 GitHub。
+<div align="center">
 
-## 🆕 v0.3.0 更新内容
+<a href="https://static.yellowrabbit.online/purrge/index.html#download"><img src="https://img.shields.io/badge/%E4%B8%8B%E8%BD%BD%20Mac%20%E7%89%88-%E5%89%8D%E5%BE%80%E5%AE%98%E7%BD%91-f0882a?style=for-the-badge&logo=apple&logoColor=white" alt="前往官网下载 Mac 版" height="40"></a>
 
-- **支持 Windows**：Windows 10 / 11 / Windows Server 均可使用，后台检查用「任务计划程序」，清理的文件进回收站，提醒窗和系统通知都是原生样式。
-- **新增两个 AI 引擎**：WorkBuddy（CodeBuddy 命令行，与 WorkBuddy 同一账号、同一积分）和 DeepSeek Harness（使用自己的 DeepSeek API Key）。两者都在关闭全部工具的模式下运行，只能给出建议、不能动文件。
-- **一条命令更新**：新增 `purrge update`，自动备份旧版本，新版本自检不通过会自动换回；有新版本时 `purrge status` 和审查页会提示。
-- **零门槛安装**：电脑上没有 Python 或 Node.js 时，安装程序会自动下载官方版本安装（只装给当前用户，不需要管理员权限），全程显示下载进度，网络不稳定时自动重试。
-- **更干净的卸载**：`purrge uninstall --purge` 会一并清掉后台任务、`purrge` 命令、AI 里的说明文件、设置与扫描记录。
+<sub>macOS 13 及以上 · Apple 芯片与 Intel 通用 · 不收费</sub>
 
-> 从 0.2.x 升级请看[更新](#-更新)一节：旧版本需要手动更新这一次，之后就能用 `purrge update` 了。
+</div>
+
+> [!NOTE]
+> - 安装包**只在官网发布**，GitHub 上不提供下载；其他地方的同名安装包请不要安装。
+> - Mac 应用目前没有开源，本仓库是命令行版（macOS / Windows）的源码。
+> - 第一次打开时 macOS 会提示「无法验证开发者」，下载时官网会显示「安装必读」，按步骤允许一次即可。
+
+---
 
 ## ✨ 核心功能
 
@@ -108,6 +110,12 @@ macOS 13 及以上 · Apple 芯片与 Intel 通用 · 不收费
 
 <table>
 <tr>
+<td colspan="2">
+<img src="docs/screenshots/review.png" alt="Purrge 审查页" width="100%">
+<p align="center"><b>审查页</b><br><sub>逐项说明用途与清理影响，勾选确认后才清理</sub></p>
+</td>
+</tr>
+<tr>
 <td width="50%" valign="top">
 <img src="docs/screenshots/popup-card.png" alt="低空间提醒">
 <p align="center"><b>低空间提醒</b><br><sub>选择「帮我看看」即开始扫描，完成后自动打开审查页面</sub></p>
@@ -127,6 +135,7 @@ macOS 13 及以上 · Apple 芯片与 Intel 通用 · 不收费
 
 ## 🚀 安装
 
+> [!TIP]
 > 🍎 Mac 上想用图形界面应用（不用终端）：[到官网下载 Mac 版](https://static.yellowrabbit.online/purrge/index.html#download)。下面是命令行版的安装方法。
 
 > [!WARNING]
@@ -311,6 +320,56 @@ purrge uninstall --purge   # 同时删除设置、扫描记录以及 Purrge 自�
 | `scanDirs` | `[]` | 额外扫描大文件 / 大文件夹的目录（如其他分区上的项目文件夹），找到的项目只会列为「需要你决定」；不能添加系统盘根目录、系统目录和用户主目录本身。更新不会覆盖这项设置 |
 | `aiEngine` | 安装时选择 | AI 引擎：`claude` / `codex` / `workbuddy` / `deepseek`，可通过 `purrge engine` 切换 |
 | `claudeModel` / `codexModel` / `workbuddyModel` / `deepseekModel` | 空 | 指定模型；留空时使用默认模型，Codex 默认模型不可用时自动切换为账号可用的模型 |
+
+</details>
+
+## 📝 更新日志
+
+### v0.3.5
+
+- **修复**：中文 Windows 上勾选「需要你决定」的项目点「清理」后，页面一直转圈收不到结果（[#6](https://github.com/RabbittuX/purrge/issues/6)）。现在单项失败不会中断整批清理，出错时页面会给出提示；已经移进回收站的项目会如实显示。感谢 @lih288504-design 报告、@Su-1003 修复。
+- **修复**：Claude Code 未登录时，连接测试仍显示「连接正常」，扫描时悄悄改用规则判断；后台扫描时 `run.log` 一直是空的；Windows 上找不到 Codex / Claude 桌面版自带的命令行（[#8](https://github.com/RabbittuX/purrge/issues/8)、[#9](https://github.com/RabbittuX/purrge/pull/9)）。感谢 @Su-1003 报告并修复。
+- **修复**：Windows 笔记本拔掉电源后后台检查会停止，现在用电池时也照常检查（[#8](https://github.com/RabbittuX/purrge/issues/8)）。
+- **新增**：可以额外扫描其他目录或分区，比如 D 盘的项目文件夹：`purrge config scanDirs add D:\项目`（[#5](https://github.com/RabbittuX/purrge/issues/5)）。在这些目录里找到的项目只会列为「需要你决定」。感谢 @oopsdoes 的建议。
+
+<details>
+<summary><b>v0.3.4</b></summary>
+
+- **修复**：Windows 上卸载后，`purrge` 命令在部分电脑上要过 10 秒左右才被删除，这期间运行 `purrge` 会报错（[#3](https://github.com/RabbittuX/purrge/pull/3)）。现在卸载结束约 2 秒后就会删除。感谢 @NaIWaniubi 报告并修复。
+
+</details>
+
+<details>
+<summary><b>v0.3.3</b></summary>
+
+- **修复**：Windows 上「Edge 浏览器缓存」一直清理不掉：它在受保护的 `%LOCALAPPDATA%/Microsoft` 文件夹里，被保护名单整体挡住了（[#4](https://github.com/RabbittuX/purrge/pull/4)）。现在只放行 Edge 的 Cache 和 Code Cache 文件夹，Edge 的密码、Cookies、书签以及 Outlook、Teams、OneDrive 等数据仍然受保护。感谢 @NaIWaniubi 报告并修复。
+
+</details>
+
+<details>
+<summary><b>v0.3.2</b></summary>
+
+- **修复**：Claude Code 开启 verbose（详细输出）时，安装的连接测试和 `purrge scan` 的 AI 判断会崩溃（[#1](https://github.com/RabbittuX/purrge/issues/1)）。感谢 @jiangwanyutao 报告并提供修复方案。
+
+</details>
+
+<details>
+<summary><b>v0.3.1</b></summary>
+
+- **Windows 两行命令安装，不需要网址**：Purrge 已发布到微软官方的 PowerShell Gallery，`Install-Module Purrge` + `Install-Purrge` 即可安装；模块自带完整代码，安装时不再访问 GitHub。
+
+</details>
+
+<details>
+<summary><b>v0.3.0</b></summary>
+
+- **支持 Windows**：Windows 10 / 11 / Windows Server 均可使用，后台检查用「任务计划程序」，清理的文件进回收站，提醒窗和系统通知都是原生样式。
+- **新增两个 AI 引擎**：WorkBuddy（CodeBuddy 命令行，与 WorkBuddy 同一账号、同一积分）和 DeepSeek Harness（使用自己的 DeepSeek API Key）。两者都在关闭全部工具的模式下运行，只能给出建议、不能动文件。
+- **一条命令更新**：新增 `purrge update`，自动备份旧版本，新版本自检不通过会自动换回；有新版本时 `purrge status` 和审查页会提示。
+- **零门槛安装**：电脑上没有 Python 或 Node.js 时，安装程序会自动下载官方版本安装（只装给当前用户，不需要管理员权限），全程显示下载进度，网络不稳定时自动重试。
+- **更干净的卸载**：`purrge uninstall --purge` 会一并清掉后台任务、`purrge` 命令、AI 里的说明文件、设置与扫描记录。
+
+> 从 0.2.x 升级请看[更新](#-更新)一节：旧版本需要手动更新这一次，之后就能用 `purrge update` 了。
 
 </details>
 
