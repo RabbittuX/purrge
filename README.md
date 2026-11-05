@@ -8,75 +8,19 @@
 
 <sub>名称取自 purr（猫咪呼噜）与 purge（清除）· by RabbittuX</sub>
 
-<br>
-
 <img src="https://img.shields.io/badge/macOS%20%7C%20Windows-1c1b22?style=flat-square" alt="macOS | Windows"> <img src="https://img.shields.io/badge/AI-Claude_Code_%7C_Codex_%7C_WorkBuddy_%7C_DeepSeek-f2a33a?style=flat-square" alt="AI 引擎"> <img src="https://img.shields.io/badge/License-PolyForm_Noncommercial-e5484d?style=flat-square" alt="License">
 
 <br><br>
 
-<a href="https://static.yellowrabbit.online/purrge/index.html#download"><img src="https://img.shields.io/badge/%E4%B8%8B%E8%BD%BD%20Mac%20%E7%89%88-%E5%89%8D%E5%BE%80%E5%AE%98%E7%BD%91-f0882a?style=for-the-badge&logo=apple&logoColor=white" alt="下载 Mac 版（前往官网）" height="44"></a>
+<a href="https://static.yellowrabbit.online/purrge/index.html#download"><img src="https://img.shields.io/badge/%E4%B8%8B%E8%BD%BD%20Mac%20%E5%BA%94%E7%94%A8-%E5%AE%98%E7%BD%91-f0882a?style=for-the-badge&logo=apple&logoColor=white" alt="下载 Mac 应用（官网）" height="40"></a>&nbsp;&nbsp;<a href="#-命令行版"><img src="https://img.shields.io/badge/%E5%AE%89%E8%A3%85%E5%91%BD%E4%BB%A4%E8%A1%8C%E7%89%88-macOS%20%7C%20Windows-1c1b22?style=for-the-badge&logo=gnubash&logoColor=white" alt="安装命令行版" height="40"></a>
 
-<sub>Mac 应用安装包只在<a href="https://static.yellowrabbit.online/purrge/index.html#download">官网</a>发布 · 命令行版安装方法见下方<a href="#-安装">「安装」</a></sub>
+<sub><a href="#-mac-应用">Mac 应用</a> · <a href="#-命令行版">命令行版</a> · <a href="#-工作原理">工作原理</a> · <a href="#-安全机制">安全机制</a> · <a href="#-常见问题">常见问题</a> · <a href="https://github.com/RabbittuX/purrge/releases">更新日志</a></sub>
 
-<br>
+<br><br>
 
-<a href="#-mac-应用10-新发布">Mac 应用</a> · <a href="#-核心功能">核心功能</a> · <a href="#-安装">安装</a> · <a href="#-使用方法">使用方法</a> · <a href="#-安全机制">安全机制</a> · <a href="#-更新日志">更新日志</a>
-
-</div>
-
-## 🍎 Mac 应用（1.0 新发布）
-
-不想用终端？Purrge for Mac 把命令行版的功能做成了图形界面应用，下载打开就能用：
-
-<table>
-<tr>
-<td width="50%" valign="top">
-
-**🖥️ 菜单栏 + 桌面悬浮球**
-
-扫描和 AI 判断的进度随时看得到，空间不够时悬浮球亮起提醒
-
-</td>
-<td width="50%" valign="top">
-
-**🛡️ 守护**
-
-后台定时检查剩余空间，在线、暂停、多久后再检查一目了然，每次检查和扫描都有记录
-
-</td>
-</tr>
-<tr>
-<td width="50%" valign="top">
-
-**🧠 在应用里切换 AI**
-
-Claude Code、Codex、WorkBuddy、DeepSeek，安装和登录都在应用里一步步完成，不用开终端
-
-</td>
-<td width="50%" valign="top">
-
-**⚙️ 白名单、深色模式、开机自启**
-
-设置和命令行版共用
-
-</td>
-</tr>
-</table>
-
-<div align="center">
-
-<a href="https://static.yellowrabbit.online/purrge/index.html#download"><img src="https://img.shields.io/badge/%E4%B8%8B%E8%BD%BD%20Mac%20%E7%89%88-%E5%89%8D%E5%BE%80%E5%AE%98%E7%BD%91-f0882a?style=for-the-badge&logo=apple&logoColor=white" alt="前往官网下载 Mac 版" height="40"></a>
-
-<sub>macOS 13 及以上 · Apple 芯片与 Intel 通用 · 不收费</sub>
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/app/home-dark.png"><img src="docs/screenshots/app/home-light.png" alt="Purrge for Mac" width="100%"></picture>
 
 </div>
-
-> [!NOTE]
-> - 安装包**只在官网发布**，GitHub 上不提供下载；其他地方的同名安装包请不要安装。
-> - Mac 应用目前没有开源，本仓库是命令行版（macOS / Windows）的源码。
-> - 第一次打开时 macOS 会提示「无法验证开发者」，下载时官网会显示「安装必读」，按步骤允许一次即可。
-
----
 
 ## ✨ 核心功能
 
@@ -106,13 +50,92 @@ Claude Code、Codex、WorkBuddy、DeepSeek，安装和登录都在应用里一�
 </tr>
 </table>
 
-## 📸 界面预览
+Purrge 有两个版本，核心功能相同：
+
+| | 🍎 Mac 应用 | 💻 命令行版 |
+|---|---|---|
+| 适合 | 不想用终端，想要图形界面 | 习惯终端，或者在用 Windows |
+| 系统 | macOS 13 及以上（Apple 芯片与 Intel） | macOS、Windows 10 / 11 |
+| 界面 | 菜单栏、桌面悬浮球、应用窗口 | 终端命令 + 浏览器里的审查页 |
+| 安装 | [官网下载](https://static.yellowrabbit.online/purrge/index.html#download) | Homebrew、一键脚本、PowerShell Gallery |
+| 源码 | 暂未开源 | 本仓库（非商业许可） |
+
+## 🍎 Mac 应用
+
+<sub>1.0 新发布</sub>
+
+不想用终端？Purrge for Mac 把命令行版的功能做成了图形界面应用，下载打开就能用：
+
+<table>
+<tr>
+<td width="50%" valign="top">
+**🖥️ 菜单栏 + 桌面悬浮球**<br><sub>扫描和 AI 判断的进度随时看得到，空间不够时悬浮球亮起提醒</sub>
+</td>
+<td width="50%" valign="top">
+**🛡️ 守护**<br><sub>后台定时检查剩余空间，在线、暂停、多久后再检查一目了然，每次检查和扫描都有记录</sub>
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+**🧠 在应用里切换 AI**<br><sub>Claude Code、Codex、WorkBuddy、DeepSeek，安装和登录都在应用里一步步完成，不用开终端</sub>
+</td>
+<td width="50%" valign="top">
+**⚙️ 白名单、深色模式、开机自启**<br><sub>设置和命令行版共用</sub>
+</td>
+</tr>
+</table>
+
+### 界面预览
+
+<table>
+<tr>
+<td width="50%" valign="top">
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/app/home-dark.png"><img src="docs/screenshots/app/home-light.png" alt="概览" width="100%"></picture>
+<p align="center"><b>概览</b><br><sub>剩余空间、上次扫描的大头一眼看清</sub></p>
+</td>
+<td width="50%" valign="top">
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/app/ai-dark.png"><img src="docs/screenshots/app/ai-light.png" alt="AI 引擎" width="100%"></picture>
+<p align="center"><b>AI 引擎</b><br><sub>四种 AI 随时切换，安装和登录都在应用里完成</sub></p>
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/app/guard-dark.png"><img src="docs/screenshots/app/guard-light.png" alt="守护" width="100%"></picture>
+<p align="center"><b>守护</b><br><sub>后台定时检查，每次检查和扫描都有记录</sub></p>
+</td>
+<td width="50%" valign="top">
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/app/review-dark.png"><img src="docs/screenshots/app/review-light.png" alt="清理审查" width="100%"></picture>
+<p align="center"><b>清理审查</b><br><sub>逐项说明用途与影响，勾选确认后才清理</sub></p>
+</td>
+</tr>
+</table>
+
+### 下载
+
+<div align="center">
+
+<a href="https://static.yellowrabbit.online/purrge/index.html#download"><img src="https://img.shields.io/badge/%E4%B8%8B%E8%BD%BD%20Mac%20%E5%BA%94%E7%94%A8-%E5%AE%98%E7%BD%91-f0882a?style=for-the-badge&logo=apple&logoColor=white" alt="前往官网下载 Mac 应用" height="40"></a>
+
+<sub>macOS 13 及以上 · Apple 芯片与 Intel 通用 · 不收费</sub>
+
+</div>
+
+> [!NOTE]
+> - 安装包**只在官网发布**，GitHub 上不提供下载；其他地方的同名安装包请不要安装。
+> - Mac 应用目前没有开源，本仓库是命令行版（macOS / Windows）的源码。
+> - 第一次打开时 macOS 会提示「无法验证开发者」，下载时官网会显示「安装必读」，按步骤允许一次即可。
+
+## 💻 命令行版
+
+终端里运行的版本，审查页在浏览器里打开；支持 macOS 和 Windows，源码就在本仓库。
+
+### 📸 界面预览
 
 <table>
 <tr>
 <td colspan="2">
-<img src="docs/screenshots/review.png" alt="Purrge 审查页" width="100%">
-<p align="center"><b>审查页</b><br><sub>逐项说明用途与清理影响，勾选确认后才清理</sub></p>
+<img src="docs/screenshots/review.png" alt="审查页">
+<p align="center"><b>审查页</b><br><sub>在浏览器里打开，逐项说明用途与清理影响，勾选确认后才清理</sub></p>
 </td>
 </tr>
 <tr>
@@ -133,10 +156,7 @@ Claude Code、Codex、WorkBuddy、DeepSeek，安装和登录都在应用里一�
 </tr>
 </table>
 
-## 🚀 安装
-
-> [!TIP]
-> 🍎 Mac 上想用图形界面应用（不用终端）：[到官网下载 Mac 版](https://static.yellowrabbit.online/purrge/index.html#download)。下面是命令行版的安装方法。
+### 🚀 安装
 
 > [!WARNING]
 > **请认准官方来源。** Purrge 只有两个官方仓库：`RabbittuX/purrge` 和 `RabbittuX/homebrew-tap`（作者名 RabbittuX，两个 t、结尾大写 X）。
@@ -145,7 +165,7 @@ Claude Code、Codex、WorkBuddy、DeepSeek，安装和登录都在应用里一�
 > - PowerShell Gallery 中的官方模块名为 `Purrge`（作者 RabbittuX，发布账号 yin），页面地址 powershellgallery.com/packages/Purrge。
 > - 安装开始时会显示「Purrge 版本号 by RabbittuX　官方来源：GitHub RabbittuX/purrge」，可据此核对；也可随时运行 `purrge version` 查看。
 
-### macOS
+#### macOS
 
 **方式一：Homebrew（推荐）**
 
@@ -177,7 +197,7 @@ bash install.sh --engine codex --threshold 20 --yes
 
 </details>
 
-### Windows
+#### Windows
 
 打开「Windows PowerShell」（不需要管理员权限），执行：
 
@@ -206,7 +226,7 @@ Install-Purrge
 
 </details>
 
-### 由 AI 代为安装（macOS / Windows）
+#### 由 AI 代为安装（macOS / Windows）
 
 在 Claude Code、Codex 或 WorkBuddy 中输入：
 
@@ -214,14 +234,14 @@ Install-Purrge
 
 AI 会读取本仓库的[安装指引](#-ai-助手安装指引)完成安装，并自动选用当前的 AI 作为分析引擎。
 
-### 安装过程
+#### 安装过程
 
 1. **选择 AI 引擎**：Claude Code、Codex、WorkBuddy 或 DeepSeek Harness（由 AI 代为安装时自动选择当前 AI）。
 2. **设置提醒阈值**：剩余空间低于该值时发出提醒，默认 15 GB。
 3. **配置 AI 引擎**：未安装时自动安装最新版本（需要 Node.js 时先询问并自动安装）；未登录时引导登录；最后进行连接测试，确认引擎可正常响应。
 4. **启用后台监控**：安装完成后，Purrge 以后台服务形式独立运行，无需保持 AI 软件处于打开状态。
 
-### 支持的 AI 引擎
+#### 支持的 AI 引擎
 
 | 引擎 | 调用方式 | 说明 |
 |---|---|---|
@@ -232,7 +252,7 @@ AI 会读取本仓库的[安装指引](#-ai-助手安装指引)完成安装，�
 
 随时切换：`purrge engine claude | codex | workbuddy | deepseek`。
 
-## 🔄 更新
+### 🔄 更新
 
 ```bash
 purrge update
@@ -245,7 +265,7 @@ purrge update
 > - Homebrew 安装的：`brew upgrade rabbittux/tap/purrge && purrge update`（设置和 AI 引擎都保留）
 > - 脚本安装的：重新运行一遍上面的安装命令
 
-## 🐾 使用方法
+### 🐾 使用方法
 
 | 操作 | 终端命令 | 在 Claude Code / Codex / WorkBuddy 中说 |
 |---|---|---|
@@ -262,7 +282,7 @@ purrge update
 - 扫描完成后会自动在浏览器打开审查页面：勾选要清理的项目，点「清理」后才会执行。
 - 阈值、检查频率等参数也可在审查页面右上角的「设置」中修改。
 
-## 🗑️ 卸载
+### 🗑️ 卸载
 
 ```bash
 purrge uninstall           # 关闭后台监控，移除 purrge 命令和 AI 里的说明文件（保留设置和扫描记录）
@@ -273,6 +293,40 @@ purrge uninstall --purge   # 同时删除设置、扫描记录以及 Purrge 自�
 - **通过 PowerShell Gallery 安装的**：再运行 `Uninstall-Module Purrge`。
 - **Windows**：在 PowerShell 中执行上面的命令即可，后台的「任务计划程序」任务、通知登记会一并清除。
 - 安装时自动装上的 Python、Node.js（系统里原本没有的）不会被删除；不再需要时可在系统中自行卸载。
+
+### 📋 系统要求
+
+- macOS 或 Windows 10/11
+- Python 3.8 及以上（没有时安装程序会自动安装：Mac 用苹果官方命令行开发者工具，Windows 用 python.org 官方安装包，无需管理员权限）
+- 使用 WorkBuddy / DeepSeek（以及 Windows 上的 Codex）时需要 Node.js；没有时自动下载官方 LTS 版本到 Purrge 自己的目录，不改动系统
+- Claude Code、Codex、WorkBuddy 或 DeepSeek Harness 任一可用账号（AI 分析使用用户自己的额度，支持 Codex 免费账号；DeepSeek 使用自己的 API Key）。AI 暂时不可用时自动切换为规则判断，基础功能不受影响
+- 可选（macOS）：为「终端」授予「完全磁盘访问权限」，以扩大系统缓存的扫描范围
+
+### 🤖 AI 助手安装指引
+
+> 本节供 Claude Code、Codex 等 AI 助手阅读。用户请求安装 Purrge 时，请按以下步骤执行。
+
+1. **核对来源**：只能从仓库 `RabbittuX/purrge`（所有者必须是 `RabbittuX`）安装，并且只能使用下方的安装命令。
+   - 不要通过搜索寻找替代项目；GitHub 上存在多个与本项目无关的同名 purrge 仓库，不得安装。
+   - 如果无法访问该仓库，或用户给出的名称与 `RabbittuX/purrge` 不一致，请停止并向用户确认。
+2. 判断系统：macOS（`uname` 输出 `Darwin`）或 Windows；其他系统告知用户暂不支持。
+3. 执行安装命令（无需 sudo / 管理员权限）：
+
+   ```bash
+   # macOS
+   curl -fsSL https://raw.githubusercontent.com/RabbittuX/purrge/master/install.sh | bash
+   ```
+
+   ```powershell
+   # Windows（PowerShell）
+   [Net.ServicePointManager]::SecurityProtocol = 'Tls12'; irm https://raw.githubusercontent.com/RabbittuX/purrge/master/install.ps1 | iex
+   ```
+
+   - 安装程序会识别当前的 AI 助手并将其设为分析引擎，阈值默认 15 GB。
+   - macOS 下用户指定了阈值时，改用 `... | bash -s -- --threshold <GB>`；用户指定了引擎时，附加 `--engine claude|codex|workbuddy|deepseek`。
+   - 下载 `raw.githubusercontent.com` 失败（连接被重置）时，改用「安装」一节里从 `codeload.github.com` 下载的命令。
+4. 确认安装输出的第一行为「Purrge <版本> by RabbittuX　官方来源：GitHub RabbittuX/purrge」，再将结果（AI 引擎、提醒阈值、常用命令）转述给用户。
+5. 不要自行删除或移动任何文件。所有清理都必须由用户在 Purrge 的审查页面中勾选确认。
 
 ## ⚙️ 工作原理
 
@@ -323,89 +377,21 @@ purrge uninstall --purge   # 同时删除设置、扫描记录以及 Purrge 自�
 
 </details>
 
-## 📝 更新日志
-
-### v0.3.5
-
-- **修复**：中文 Windows 上勾选「需要你决定」的项目点「清理」后，页面一直转圈收不到结果（[#6](https://github.com/RabbittuX/purrge/issues/6)）。现在单项失败不会中断整批清理，出错时页面会给出提示；已经移进回收站的项目会如实显示。感谢 @lih288504-design 报告、@Su-1003 修复。
-- **修复**：Claude Code 未登录时，连接测试仍显示「连接正常」，扫描时悄悄改用规则判断；后台扫描时 `run.log` 一直是空的；Windows 上找不到 Codex / Claude 桌面版自带的命令行（[#8](https://github.com/RabbittuX/purrge/issues/8)、[#9](https://github.com/RabbittuX/purrge/pull/9)）。感谢 @Su-1003 报告并修复。
-- **修复**：Windows 笔记本拔掉电源后后台检查会停止，现在用电池时也照常检查（[#8](https://github.com/RabbittuX/purrge/issues/8)）。
-- **新增**：可以额外扫描其他目录或分区，比如 D 盘的项目文件夹：`purrge config scanDirs add D:\项目`（[#5](https://github.com/RabbittuX/purrge/issues/5)）。在这些目录里找到的项目只会列为「需要你决定」。感谢 @oopsdoes 的建议。
+## ❓ 常见问题
 
 <details>
-<summary><b>v0.3.4</b></summary>
+<summary><b>Mac 应用和命令行版能一起装吗？</b></summary>
 
-- **修复**：Windows 上卸载后，`purrge` 命令在部分电脑上要过 10 秒左右才被删除，这期间运行 `purrge` 会报错（[#3](https://github.com/RabbittuX/purrge/pull/3)）。现在卸载结束约 2 秒后就会删除。感谢 @NaIWaniubi 报告并修复。
+可以，两者共用同一份设置和扫描记录。为避免重复提醒，Mac 应用打开后会询问是否改由应用负责后台检查；`purrge` 命令照常可用。
 
 </details>
 
 <details>
-<summary><b>v0.3.3</b></summary>
+<summary><b>在哪里看更新日志？</b></summary>
 
-- **修复**：Windows 上「Edge 浏览器缓存」一直清理不掉：它在受保护的 `%LOCALAPPDATA%/Microsoft` 文件夹里，被保护名单整体挡住了（[#4](https://github.com/RabbittuX/purrge/pull/4)）。现在只放行 Edge 的 Cache 和 Code Cache 文件夹，Edge 的密码、Cookies、书签以及 Outlook、Teams、OneDrive 等数据仍然受保护。感谢 @NaIWaniubi 报告并修复。
-
-</details>
-
-<details>
-<summary><b>v0.3.2</b></summary>
-
-- **修复**：Claude Code 开启 verbose（详细输出）时，安装的连接测试和 `purrge scan` 的 AI 判断会崩溃（[#1](https://github.com/RabbittuX/purrge/issues/1)）。感谢 @jiangwanyutao 报告并提供修复方案。
+命令行版每个版本的更新内容都在 [Releases](https://github.com/RabbittuX/purrge/releases)；Mac 应用的说明在 [Purrge for Mac 1.0.0](https://github.com/RabbittuX/purrge/releases/tag/mac-v1.0.0)。
 
 </details>
-
-<details>
-<summary><b>v0.3.1</b></summary>
-
-- **Windows 两行命令安装，不需要网址**：Purrge 已发布到微软官方的 PowerShell Gallery，`Install-Module Purrge` + `Install-Purrge` 即可安装；模块自带完整代码，安装时不再访问 GitHub。
-
-</details>
-
-<details>
-<summary><b>v0.3.0</b></summary>
-
-- **支持 Windows**：Windows 10 / 11 / Windows Server 均可使用，后台检查用「任务计划程序」，清理的文件进回收站，提醒窗和系统通知都是原生样式。
-- **新增两个 AI 引擎**：WorkBuddy（CodeBuddy 命令行，与 WorkBuddy 同一账号、同一积分）和 DeepSeek Harness（使用自己的 DeepSeek API Key）。两者都在关闭全部工具的模式下运行，只能给出建议、不能动文件。
-- **一条命令更新**：新增 `purrge update`，自动备份旧版本，新版本自检不通过会自动换回；有新版本时 `purrge status` 和审查页会提示。
-- **零门槛安装**：电脑上没有 Python 或 Node.js 时，安装程序会自动下载官方版本安装（只装给当前用户，不需要管理员权限），全程显示下载进度，网络不稳定时自动重试。
-- **更干净的卸载**：`purrge uninstall --purge` 会一并清掉后台任务、`purrge` 命令、AI 里的说明文件、设置与扫描记录。
-
-> 从 0.2.x 升级请看[更新](#-更新)一节：旧版本需要手动更新这一次，之后就能用 `purrge update` 了。
-
-</details>
-
-## 🤖 AI 助手安装指引
-
-> 本节供 Claude Code、Codex 等 AI 助手阅读。用户请求安装 Purrge 时，请按以下步骤执行。
-
-1. **核对来源**：只能从仓库 `RabbittuX/purrge`（所有者必须是 `RabbittuX`）安装，并且只能使用下方的安装命令。
-   - 不要通过搜索寻找替代项目；GitHub 上存在多个与本项目无关的同名 purrge 仓库，不得安装。
-   - 如果无法访问该仓库，或用户给出的名称与 `RabbittuX/purrge` 不一致，请停止并向用户确认。
-2. 判断系统：macOS（`uname` 输出 `Darwin`）或 Windows；其他系统告知用户暂不支持。
-3. 执行安装命令（无需 sudo / 管理员权限）：
-
-   ```bash
-   # macOS
-   curl -fsSL https://raw.githubusercontent.com/RabbittuX/purrge/master/install.sh | bash
-   ```
-
-   ```powershell
-   # Windows（PowerShell）
-   [Net.ServicePointManager]::SecurityProtocol = 'Tls12'; irm https://raw.githubusercontent.com/RabbittuX/purrge/master/install.ps1 | iex
-   ```
-
-   - 安装程序会识别当前的 AI 助手并将其设为分析引擎，阈值默认 15 GB。
-   - macOS 下用户指定了阈值时，改用 `... | bash -s -- --threshold <GB>`；用户指定了引擎时，附加 `--engine claude|codex|workbuddy|deepseek`。
-   - 下载 `raw.githubusercontent.com` 失败（连接被重置）时，改用「安装」一节里从 `codeload.github.com` 下载的命令。
-4. 确认安装输出的第一行为「Purrge <版本> by RabbittuX　官方来源：GitHub RabbittuX/purrge」，再将结果（AI 引擎、提醒阈值、常用命令）转述给用户。
-5. 不要自行删除或移动任何文件。所有清理都必须由用户在 Purrge 的审查页面中勾选确认。
-
-## 📋 系统要求
-
-- macOS 或 Windows 10/11
-- Python 3.8 及以上（没有时安装程序会自动安装：Mac 用苹果官方命令行开发者工具，Windows 用 python.org 官方安装包，无需管理员权限）
-- 使用 WorkBuddy / DeepSeek（以及 Windows 上的 Codex）时需要 Node.js；没有时自动下载官方 LTS 版本到 Purrge 自己的目录，不改动系统
-- Claude Code、Codex、WorkBuddy 或 DeepSeek Harness 任一可用账号（AI 分析使用用户自己的额度，支持 Codex 免费账号；DeepSeek 使用自己的 API Key）。AI 暂时不可用时自动切换为规则判断，基础功能不受影响
-- 可选（macOS）：为「终端」授予「完全磁盘访问权限」，以扩大系统缓存的扫描范围
 
 ## 📄 许可证
 
