@@ -203,6 +203,87 @@ class TestCleanSafety(Base):
         self.assertEqual(r, {"st": "deleted", "gone": True, "trash": False})
 
 
+
+class TestCleanRobust(Base):
+    """#6：移到回收站这一步出任何异常都不能中断整批，也不能让审查页一直转圈。"""
+
+    def test_trash_error_does_not_abort_batch(self):
+        h = self.e.home
+        (h / "a.mov").write_bytes(b"x" * 8192)
+        (h / "moved.mov").write_bytes(b"x" * 8192)
+        (h / "cache").mkdir(); (h / "cache/x.bin").write_bytes(b"x" * 4096)
+        r = self.e.run(r"""
+        import os, shutil
+        from pathlib import Path
+        import clean as C
+        H = Path.home()
+        def bad_trash(path):
+            if path.endswith("moved.mov"):              # 接口报错，但文件其实已经移走了
+                shutil.move(path, str(H / "elsewhere.mov"))
+            raise AttributeError("'NoneType' object has no attribute 'strip'")
+        C._to_trash = bad_trash
+        m = lambda p: os.stat(p).st_mtime
+        items = [
+          {"id": "c1", "path": str(H/"a.mov"), "kind": "large-file", "mode": "whole", "tier": "optional", "mtimeAtScan": m(H/"a.mov")},
+          {"id": "c2", "path": str(H/"moved.mov"), "kind": "large-file", "mode": "whole", "tier": "optional", "mtimeAtScan": m(H/"moved.mov")},
+          {"id": "c3", "path": str(H/"cache"), "kind": "cache", "mode": "contents", "tier": "primary"},
+        ]
+        out = C.clean({"items": items}, ["c1", "c2", "c3"], log=lambda *a: None)
+        print("@@" + json.dumps({x["id"]: [x["status"], x.get("trashedBytes", 0) > 0] for x in out["results"]}
+                                | {"a_kept": (H/"a.mov").exists(), "cache_empty": not any((H/"cache").iterdir())}))
+        """)
+        self.assertEqual(r["c1"], ["failed", False])
+        self.assertEqual(r["c2"], ["trashed", True], "报错但文件已移走：如实显示已移到回收站")
+        self.assertEqual(r["c3"], ["deleted", False], "前面的项失败，后面的项照常清理")
+        self.assertTrue(r["a_kept"] and r["cache_empty"])
+
+    def test_win_to_trash_stderr_none(self):
+        r = self.e.run(r"""
+        import subprocess, sys
+        from pathlib import Path
+        sys.modules["send2trash"] = None                 # 强制走 PowerShell 路径
+        from plat import win
+        win._ps = lambda script, timeout=60: subprocess.CompletedProcess(["powershell"], 1, "", None)
+        try:
+            win.to_trash(str(Path.home()), Path.home()); res = "ok"
+        except Exception as e:
+            res = type(e).__name__
+        print("@@" + json.dumps(res))
+        """)
+        self.assertEqual(r, "OSError")
+
+    def test_server_clean_always_json(self):
+        r = self.e.run(r"""
+        import threading, time, urllib.request
+        from pathlib import Path
+        from common import new_run_dir
+        import server
+        def boom(*a, **k): raise RuntimeError("boom")
+        server.clean = boom
+        d = new_run_dir()
+        (d / "review.json").write_text(json.dumps({"items": [], "summary": "", "judgedBy": "rules"}))
+        threading.Thread(target=server.serve, args=(d,), kwargs={"open_browser": False, "log": lambda *a: None}, daemon=True).start()
+        for _ in range(300):
+            if (d / "review-url.txt").exists(): break
+            time.sleep(0.1)
+        url = (d / "review-url.txt").read_text(); base = url.split("/?")[0]; tok = url.split("token=")[1]
+        req = urllib.request.Request(base + "/api/clean", data=b'{"ids": []}', headers={"X-DG-Token": tok, "Content-Type": "application/json"})
+        print("@@" + json.dumps(json.loads(urllib.request.urlopen(req, timeout=30).read())))
+        """)
+        self.assertEqual(r["results"], [])
+        self.assertIn("boom", r["error"])
+
+    @unittest.skipUnless(WIN, "只在 Windows 上有 PowerShell")
+    def test_win_ps_gbk_output(self):
+        r = self.e.run(r"""
+        from plat import win
+        a = win._ps("[Console]::OutputEncoding=[Text.Encoding]::GetEncoding(936); Write-Error '无法访问路径'; exit 1")
+        b = win._ps("Write-Output '中文输出测试'")
+        c = win._ps("Write-Output 42")
+        print("@@" + json.dumps({"a": type(a.stderr).__name__, "b": b.stdout.strip(), "c": c.stdout}))
+        """)
+        self.assertEqual(r, {"a": "str", "b": "中文输出测试", "c": "42\n"})
+
 class TestClassify(Base):
     """AI 判断：保护名单强制 keep、用户文件不进首要清理、AI 失败退回规则。"""
 

@@ -326,7 +326,7 @@ function totals() {
   $("#go").disabled = !sel.size;
 }
 
-function toast(t) { const el = $("#toast"); el.textContent = t; el.classList.add("show"); setTimeout(() => el.classList.remove("show"), 1800); }
+function toast(t, ms = 1800) { const el = $("#toast"); el.textContent = t; el.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove("show"), ms); }
 function open(id) { $("#scrim").classList.add("show"); $(id).classList.add("show"); }
 function closeAll() { document.querySelectorAll(".show").forEach((e) => e.classList.remove("show")); }
 
@@ -357,8 +357,14 @@ $("#go").onclick = () => {
 function countUp(el, to) { const t0 = performance.now(); const step = (t) => { const p = Math.min(1, (t - t0) / 900); el.textContent = fmt(to * (1 - Math.pow(1 - p, 3))); if (p < 1) requestAnimationFrame(step); }; requestAnimationFrame(step); }
 $("#cf-go").onclick = async () => {
   const b = $("#cf-go"); b.innerHTML = '<span class="spin"></span>正在清理…'; b.disabled = true;
-  const out = await api("/api/clean", { ids: [...sel] });
+  let out;
+  try { out = await api("/api/clean", { ids: [...sel] }); } catch (e) { out = { error: "清理请求中断了" }; }
   closeAll();
+  if (out.error || !Array.isArray(out.results)) {   // 别让按钮一直转圈；部分项目可能已经处理，提示重新扫描确认
+    b.innerHTML = "确认清理"; b.disabled = false;
+    toast((out.error || "清理失败") + "。部分项目可能已经处理，请重新扫描确认后再试", 8000);
+    return;
+  }
   const C = { deleted: ["var(--green)", "✓"], trashed: ["var(--blue)", "↗"], partial: ["var(--amber)", "!"], failed: ["var(--red)", "×"], skipped: ["var(--mute)", "–"], gone: ["var(--mute)", "–"] };
   const trashed = out.results.reduce((a, r) => a + (r.trashedBytes || 0), 0);
   $("#rs-sub").textContent = `剩余空间 ${fmt(out.freeBefore)} → ${fmt(out.freeAfter)}` + (trashed ? ` · 另有 ${fmt(trashed)} 在废纸篓，清空后释放` : "");
