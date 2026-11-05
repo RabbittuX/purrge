@@ -32,6 +32,8 @@ out = {"summary": "测试总结", "items": [{"id": it["id"], "tier": "primary", 
 mode = os.environ.get("FAKE_MODE", "ok")
 if mode == "fail":
     sys.stderr.write("boom"); sys.exit(1)
+if mode == "notloggedin":
+    print(json.dumps({"type": "result", "subtype": "success", "is_error": True, "result": "Not logged in · Please run /login"})); sys.exit(1)
 result = {"type": "result", "subtype": "success", "result": "这是结果：" + json.dumps(out, ensure_ascii=False)}
 if mode == "verbose":    # Claude Code 开了 verbose：输出整段消息数组
     print(json.dumps([{"type": "system", "subtype": "init"}, {"type": "assistant", "message": {}}, result], ensure_ascii=False))
@@ -371,8 +373,43 @@ class TestEngines(Base):
             ok, model, err = engines.test(cfg, log=lambda *a: None)
             print("@@" + json.dumps([ok, err]))
             ''')
-        self.assertEqual(got, {"ok": [True, ""], "verbose": [True, ""], "verbose-noresult": [False, ""],
-                               "scalar": [False, ""], "text": [True, ""]})
+        empty = "AI 没有返回任何内容"
+        self.assertEqual(got, {"ok": [True, ""], "verbose": [True, ""], "verbose-noresult": [False, empty],
+                               "scalar": [False, empty], "text": [True, ""]})
+
+    def test_claude_not_logged_in(self):
+        """#8：未登录时 claude 输出 is_error=true 的 result，连接测试和逐项判断都不能当成 AI 回答。"""
+        self.e.extra["FAKE_MODE"] = "notloggedin"
+        r = self.e.run(textwrap.dedent(TestClassify.CAND) + textwrap.dedent(r'''
+        import engines, shutil
+        from common import load_config, save_config
+        from classify import classify
+        cfg = {"aiEngine": "claude", "claudePath": shutil.which("claude"), "claudeModel": ""}
+        ok, model, err = engines.test(cfg, log=lambda *a: None)
+        c = load_config(); c.update(cfg); save_config(c)
+        logs = []
+        rv = classify(cand, log=logs.append)
+        print("@@" + json.dumps({"test": [ok, err], "by": rv["judgedBy"], "why": " ".join(logs)}))
+        '''))
+        self.assertEqual(r["test"], [False, "Not logged in · Please run /login"])
+        self.assertEqual(r["by"], "rules")
+        self.assertIn("Not logged in", r["why"], "日志里要能看到真实原因")
+
+    def test_desktop_cli_paths(self):
+        """#8：Windows 上 Codex / Claude 桌面版自带、但不在 PATH 里的命令行。"""
+        r = self.e.run(r'''
+        import engines
+        from pathlib import Path
+        local = Path.home() / "LocalAppData"
+        for rel in ("OpenAI/Codex/bin/a1/codex.exe", "Claude-3p/claude-code/2.1.309/9078/claude.exe", "Claude-3p/claude-code-vm/x/claude.exe"):
+            (local / rel).parent.mkdir(parents=True); (local / rel).write_bytes(b"MZ")
+        (local / "OpenAI/Codex/bin/not-a-file/codex.exe").mkdir(parents=True)
+        rel = lambda xs: sorted(Path(x).relative_to(local).as_posix() for x in xs)
+        print("@@" + json.dumps({e: rel(engines._desktop_paths(e, local)) for e in ("codex", "claude", "workbuddy")}))
+        ''')
+        self.assertEqual(r, {"codex": ["OpenAI/Codex/bin/a1/codex.exe"],
+                             "claude": ["Claude-3p/claude-code-vm/x/claude.exe", "Claude-3p/claude-code/2.1.309/9078/claude.exe"],
+                             "workbuddy": []})
 
     def test_names_and_find(self):
         r = self.e.run(r'''
@@ -757,6 +794,37 @@ class TestScanAndServer(Base):
         print("@@" + json.dumps({"keys": sorted(c.keys()), "items": c["items"][:3]}))
         ''')
         self.assertTrue({"items", "freeBytes", "totalBytes"} <= set(r["keys"]))
+
+    def test_background_run_log_is_live(self):
+        """#8：后台扫描的 run.log 要实时写入，扫描完、审查页还开着时就能看到进度。"""
+        r = self.e.run(r'''
+        import subprocess, time
+        import dg
+        from common import DG_HOME
+        got = []
+        class FakePopen:                      # 截下后台启动命令，由测试自己启动，测完直接结束，不留进程
+            def __init__(self, cmd, **kw):
+                got.append(cmd); kw["stdout"].close()
+        DG_HOME.mkdir(parents=True, exist_ok=True)
+        real = subprocess.Popen
+        subprocess.Popen = FakePopen
+        dg.cmd_run(["--background", "--no-open"])
+        subprocess.Popen = real
+        log = DG_HOME / "run.log"
+        with open(log, "a") as f:
+            p = real(got[0], stdout=f, stderr=subprocess.STDOUT)
+        try:
+            for _ in range(900):
+                text = log.read_text(encoding="utf-8", errors="replace")
+                if "审查页面" in text or p.poll() is not None:
+                    break
+                time.sleep(0.1)
+        finally:
+            p.kill(); p.wait()
+        print("@@" + json.dumps({"alive_when_read": "审查页面" in text, "log": text}))
+        ''')
+        self.assertIn("扫描完成", r["log"])
+        self.assertTrue(r["alive_when_read"], "审查页还开着时日志就应该已经写进文件")
 
     def test_server(self):
         r = self.e.run(r'''

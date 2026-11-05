@@ -55,6 +55,21 @@ def _version(path):
     return tuple(int(x) for x in m.groups()) if m else (0, 0, 0)
 
 
+def _desktop_paths(engine, local):
+    """桌面版应用自带、但不会加进 PATH 的命令行（Codex / Claude 桌面版都是这种）。"""
+    patterns = {
+        "codex": ["OpenAI/Codex/bin/*/codex.exe",
+                  "Programs/codex/codex.exe",
+                  "Programs/Codex/codex.exe"],
+        "claude": ["Claude-3p/claude-code/*/*/claude.exe",
+                   "Claude-3p/claude-code-vm/*/claude.exe"],
+    }.get(engine, [])
+    found = []
+    for pat in patterns:
+        found += sorted(str(p) for p in local.glob(pat) if p.is_file())
+    return found
+
+
 def _candidates(engine):
     found = shutil.which(BIN.get(engine, engine))
     paths = [found] if found else []
@@ -73,7 +88,9 @@ def _candidates(engine):
     elif sys.platform == "win32":    # Windows：官方安装器放在 ~/.local/bin，npm 全局命令在 %APPDATA%\\npm
         exe = BIN[engine]
         appdata = Path(os.environ.get("APPDATA", HOME / "AppData/Roaming"))
+        local = Path(os.environ.get("LOCALAPPDATA", HOME / "AppData/Local"))
         paths += [HOME / ".local/bin" / f"{exe}.exe", appdata / "npm" / f"{exe}.cmd", nodejs.bin_dir() / f"{exe}.cmd"]
+        paths += _desktop_paths(engine, local)
     elif engine == "claude":
         paths += [HOME / ".local/bin/claude", HOME / ".claude/local/claude", "/opt/homebrew/bin/claude", "/usr/local/bin/claude"]
     else:   # ChatGPT / Codex 桌面版自带的 codex 往往比命令行装的新
@@ -306,6 +323,10 @@ def _ask_once(engine, path, prompt, model, timeout):
         # Claude Code 开了 verbose 时，json 模式输出整段消息数组，结果在最后一条 type=result 里
         if isinstance(data, list):
             data = next((d for d in reversed(data) if isinstance(d, dict) and d.get("type") == "result"), {})
+        if isinstance(data, dict) and data.get("is_error"):
+            # 没登录 / 鉴权失败时 claude 也输出一条 result（is_error=true，result 是报错文字，退出码 1），
+            # 不能把这句话当成 AI 的回答（#8）
+            raise AIError(str(data.get("result") or "Claude Code 返回了错误")[:400])
         return data.get("result", "") if isinstance(data, dict) else ""
     # Codex：只读沙箱、不留会话，在空目录里运行，避免读到别的项目说明
     with _tmpdir() as tmp:
@@ -352,10 +373,20 @@ def ask(cfg, prompt, timeout=600, log=print):
     raise last
 
 
+_REFUSE = re.compile(r"not logged in|please run /login|unauthorized|invalid api key|authentication[ _]?error", re.I)
+
+
 def test(cfg, log=print):
     """发一句很短的话，确认 AI 能正常回复。返回 (成功, 用上的模型, 错误信息)。"""
     try:
         text, model = ask(cfg, "只回复两个字母：OK。不要执行任何命令。", timeout=180, log=log)
-        return bool(text.strip()), model, ""
     except AIError as e:
         return False, "", str(e)
+    text = (text or "").strip()
+    if not text:
+        return False, model, "AI 没有返回任何内容"
+    if _REFUSE.search(text):
+        # 未登录 / 鉴权失败时，命令行会把这句话当正常输出打印出来（退出码仍是 1），
+        # 只看「有没有文字」会把这种情况误判成连接正常。
+        return False, model, text.splitlines()[0][:200]
+    return True, model, ""
