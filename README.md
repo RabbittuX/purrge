@@ -20,6 +20,13 @@
 
 <br>
 
+## 🆕 v0.3.5 更新内容
+
+- **修复**：中文 Windows 上勾选「需要你决定」的项目点「清理」后，页面一直转圈收不到结果（[#6](https://github.com/RabbittuX/purrge/issues/6)）。现在单项失败不会中断整批清理，出错时页面会给出提示；已经移进回收站的项目会如实显示。感谢 @lih288504-design 报告、@Su-1003 修复。
+- **修复**：Claude Code 未登录时，连接测试仍显示「连接正常」，扫描时悄悄改用规则判断；后台扫描时 `run.log` 一直是空的；Windows 上找不到 Codex / Claude 桌面版自带的命令行（[#8](https://github.com/RabbittuX/purrge/issues/8)、[#9](https://github.com/RabbittuX/purrge/pull/9)）。感谢 @Su-1003 报告并修复。
+- **修复**：Windows 笔记本拔掉电源后后台检查会停止，现在用电池时也照常检查（[#8](https://github.com/RabbittuX/purrge/issues/8)）。
+- **新增**：可以额外扫描其他目录或分区，比如 D 盘的项目文件夹：`purrge config scanDirs add D:\项目`（[#5](https://github.com/RabbittuX/purrge/issues/5)）。在这些目录里找到的项目只会列为「需要你决定」。感谢 @oopsdoes 的建议。
+
 ## 🆕 v0.3.4 更新内容
 
 - **修复**：Windows 上卸载后，`purrge` 命令在部分电脑上要过 10 秒左右才被删除，这期间运行 `purrge` 会报错（[#3](https://github.com/RabbittuX/purrge/pull/3)）。现在卸载结束约 2 秒后就会删除。感谢 @NaIWaniubi 报告并修复。
