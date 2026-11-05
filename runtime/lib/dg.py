@@ -167,6 +167,32 @@ def cmd_review(args):
     serve(run, open_browser="--no-open" not in args)
 
 
+def _config_list(cfg, key, rest):
+    from common import _resolved, scan_dir_problem
+    items = [x for x in (cfg.get(key) if isinstance(cfg.get(key), list) else []) if isinstance(x, str)]
+    op = rest[0] if rest[0] in ("add", "remove", "clear") else "add"
+    paths = rest[1:] if rest[0] in ("add", "remove", "clear") else rest
+    same = lambda a, b: os.path.normcase(str(_resolved(a))) == os.path.normcase(str(_resolved(b)))
+    if op == "clear":
+        items = []
+    elif not paths:
+        sys.exit(f"用法：purrge config {key} add <路径> / remove <路径> / clear")
+    for raw in paths:
+        full = str(_resolved(raw)) if op == "add" else raw
+        if op == "add":
+            if key == "scanDirs":
+                why = scan_dir_problem(full, cfg)
+                if why:
+                    sys.exit(f"不能添加 {raw}：{why}")
+            if not any(same(full, x) for x in items):
+                items.append(full)
+        else:
+            items = [x for x in items if not same(raw, x)]
+    cfg[key] = items
+    save_config(cfg)
+    print(json.dumps(cfg, ensure_ascii=False, indent=1))
+
+
 def cmd_config(args):
     cfg = load_config()
     if len(args) >= 2:
@@ -174,6 +200,8 @@ def cmd_config(args):
         if key in ("threshold", "阈值"):
             key = "thresholdGB"
         old = cfg.get(key)
+        if isinstance(old, list) or key in ("scanDirs", "protect"):     # 列表：add / remove / clear，直接写路径等于 add
+            return _config_list(cfg, key, args[1:])
         cfg[key] = type(old)(val) if isinstance(old, (int, float)) and not isinstance(old, bool) else val
         if isinstance(old, (int, float)):
             cfg[key] = float(val) if "." in str(val) else int(val)
