@@ -9,7 +9,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from common import (HOME, data_volume, disk_status, du_bytes, expand, is_protected, load_config, load_rules,
-                    running_processes)
+                    running_processes, scan_dir_problem)
 
 MB = 1024 * 1024
 
@@ -37,6 +37,34 @@ def _last_used(p):
             pass
         return mt
     return max(mt or 0, at or 0)
+
+
+def _skip_name(name):
+    """隐藏目录、回收站、系统卷信息这类不该列给用户清理的目录（其他分区根目录下常见）。"""
+    return name.startswith((".", "$")) or name.lower() in ("system volume information", "recycler")
+
+
+_SYSTEM_FILES = ("pagefile.sys", "hiberfil.sys", "swapfile.sys", "dumpstack.log.tmp", "dumpstack.log")
+
+
+def _walk_large_files(roots, min_bytes, limit=120):
+    """在用户添加的目录里找大文件（跳过隐藏目录、回收站、node_modules），总共最多花 limit 秒。"""
+    out, deadline = [], time.time() + limit
+    for root in roots:
+        for cur, dirs, files in os.walk(root, onerror=lambda e: None):
+            dirs[:] = [d for d in dirs if not _skip_name(d) and d.lower() != "node_modules"]
+            if time.time() > deadline:
+                return out
+            for f in files:
+                if f.startswith(".") or f.lower() in _SYSTEM_FILES:   # 其他分区根目录上可能有页面文件等系统文件
+                    continue
+                p = os.path.join(cur, f)
+                try:
+                    if os.lstat(p).st_size > min_bytes:
+                        out.append(p)
+                except OSError:
+                    pass
+    return out
 
 
 def scan(progress=print):
@@ -112,10 +140,23 @@ def scan(progress=print):
              "defaultTier": "optional", "regenerable": False, "impactHint": "", "appsRunning": [],
              "scanLimited": False, "protected": is_protected(path, cfg, rules), "lastUsed": _last_used(path)})
 
-    # 4) 常用目录下的大文件夹
+    # 4) 常用目录下的大文件夹；5) 用户在 scanDirs 里额外添加的目录（#5，比如 D 盘的项目文件夹）
     progress("统计大文件夹…")
-    for root in ls.get("dirRoots", []):
-        root = expand(root)
+    extra = [expand(d) for d in cfg.get("scanDirs") or [] if isinstance(d, str) and d.strip()]
+    extra = [d for d in extra if scan_dir_problem(d, cfg, rules) is None]
+    if extra:
+        progress("扫描你添加的目录…")
+        for path in _walk_large_files(extra, ls["fileMinMB"] * MB):
+            if any(path.startswith(e + os.sep) or path == e for e in excl) or any(path.startswith(s + os.sep) for s in seen):
+                continue
+            try:            # 被系统占用的文件，Python 3.9 在 Windows 上解析路径会报错：跳过这一个，不影响整次扫描
+                size, prot = plat.file_bytes(path), is_protected(path, cfg, rules)
+            except OSError:
+                continue
+            add({"path": path, "sizeBytes": size, "kind": "large-file", "name": Path(path).name, "mode": "whole",
+                 "defaultTier": "optional", "regenerable": False, "impactHint": "", "appsRunning": [],
+                 "scanLimited": False, "protected": prot, "lastUsed": _last_used(path)})
+    for root in [expand(r) for r in ls.get("dirRoots", [])] + extra:
         if not root.is_dir():
             continue
         rows = plat.dir_sizes(root, ls.get("dirDepth", 2))
@@ -130,7 +171,7 @@ def scan(progress=print):
                 continue
             chosen.append((s, pth))
         for s, pth in chosen:
-            if any(pth.startswith(e + os.sep) for e in excl):
+            if any(pth.startswith(e + os.sep) for e in excl) or (root in extra and _skip_name(Path(pth).name)):
                 continue
             add({"path": pth, "sizeBytes": s, "kind": "large-dir", "name": Path(pth).name, "mode": "whole",
                  "defaultTier": "optional", "regenerable": False, "impactHint": "", "appsRunning": [],

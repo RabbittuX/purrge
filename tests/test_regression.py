@@ -504,6 +504,129 @@ class TestConfig(Base):
         self.assertEqual((r["aiEngine"], r["claudeModel"], r["thresholdGB"], "aiModel" in r), ("claude", "m1", 20, False))
 
 
+class TestScanDirs(Base):
+    """#5：用户可配置的额外扫描目录（其他分区 / 项目文件夹）。"""
+
+    def make_data(self):
+        d = Path(self.e.tmp.name) / "data"
+        (d / "proj").mkdir(parents=True)
+        for i in range(5):
+            (d / "proj" / f"s{i}.txt").write_bytes(b"x" * 1000)
+        (d / "big.bin").write_bytes(b"x" * 8192)
+        for sub in (".hid", "$RECYCLE.BIN", "node_modules"):
+            (d / sub).mkdir()
+            (d / sub / "inner.bin").write_bytes(b"x" * 8192)
+        return d
+
+    def test_config_list(self):
+        d = self.make_data()
+        self.e.extra["DATA"] = str(d)
+        r = self.e.run(r"""
+        import os, sys
+        from pathlib import Path
+        import dg
+        from common import load_config
+        out = {}
+        def run(*a):
+            try:
+                dg.cmd_config(list(a)); return "ok"
+            except SystemExit as e:
+                return str(e)
+        D = os.environ["DATA"]
+        root = os.environ.get("SystemDrive", "C:") + "\\" if sys.platform == "win32" else "/"
+        out["add"] = run("scanDirs", "add", D)
+        out["dup"] = run("scanDirs", D)
+        out["home"] = run("scanDirs", "add", str(Path.home()))
+        out["root"] = run("scanDirs", "add", root)
+        if sys.platform != "win32":       # Windows 上 "/" 是「当前所在盘」的根目录，不一定是系统盘
+            out["slash"] = run("scanDirs", "add", "/")
+        out["missing"] = run("scanDirs", "add", D + "/nope")
+        out["after_add"] = load_config()["scanDirs"]
+        out["protect"] = run("protect", "add", D + "/proj")
+        out["protect_list"] = load_config()["protect"]
+        out["remove"] = run("scanDirs", "remove", D)
+        out["after_remove"] = load_config()["scanDirs"]
+        run("scanDirs", "add", D); run("scanDirs", "clear")
+        out["after_clear"] = load_config()["scanDirs"]
+        out["threshold"] = run("thresholdGB", "20"); out["th"] = load_config()["thresholdGB"]
+        out["real"] = str(Path(D).resolve())
+        print("@@" + json.dumps(out))
+        """)
+        self.assertEqual((r["add"], r["dup"]), ("ok", "ok"))
+        self.assertEqual(r["after_add"], [r["real"]], "添加时去重、存完整路径")
+        self.assertIn("主目录", r["home"])
+        self.assertIn("不能添加", r["root"])
+        if not WIN:
+            self.assertIn("不能添加", r["slash"])
+        self.assertIn("不是一个存在的文件夹", r["missing"])
+        self.assertEqual(r["protect_list"], [str(Path(r["real"]) / "proj")], "protect 也按列表追加，不再被写成字符串")
+        self.assertEqual((r["after_remove"], r["after_clear"]), ([], []))
+        self.assertEqual((r["threshold"], r["th"]), ("ok", 20), "普通配置项照旧")
+
+    def test_scan_extra_dirs(self):
+        d = self.make_data()
+        self.e.extra["DATA"] = str(d)
+        tmp = self.e.home / "AppData/Local/Temp"      # Windows：%TEMP% 会被整体列为缓存，测试数据不能放在真实的 %TEMP% 里
+        tmp.mkdir(parents=True)
+        self.e.extra.update(TEMP=str(tmp), TMP=str(tmp), LOCALAPPDATA=str(self.e.home / "AppData/Local"))
+        r = self.e.run(r"""
+        import os
+        from pathlib import Path
+        import scan as S
+        from common import load_config, save_config
+        c = load_config(); c["scanDirs"] = [os.environ["DATA"], str(Path.home()), "/", "C:\\"]; save_config(c)  # 后几个不合法，扫描时跳过
+        orig = S.load_rules
+        def rules():
+            r = orig(); r["largeScan"] = dict(r["largeScan"], fileMinMB=0.004, dirMinMB=0.004); return r
+        S.load_rules = rules
+        out = S.scan(progress=lambda *a: None)
+        base = str(Path(os.environ["DATA"]).resolve())
+        rel = lambda p: os.path.relpath(os.path.realpath(p), base).replace(os.sep, "/")
+        mine = [x for x in out["items"] if os.path.realpath(x["path"]).startswith(base)]
+        print("@@" + json.dumps(sorted([rel(x["path"]), x["kind"], x["defaultTier"]] for x in mine)))
+        """)
+        self.assertIn(["big.bin", "large-file", "optional"], r)
+        self.assertIn(["proj", "large-dir", "optional"], r)
+        names = [x[0] for x in r]
+        for bad in (".hid", ".hid/inner.bin", "$RECYCLE.BIN", "$RECYCLE.BIN/inner.bin", "node_modules/inner.bin"):
+            self.assertNotIn(bad, names)
+        self.assertTrue(all(x[2] == "optional" for x in r), "额外目录里找到的只能是「需要你决定」")
+
+    def test_default_scan_unchanged_without_scan_dirs(self):
+        """没配 scanDirs 时，常用目录里的隐藏 / $ 开头文件夹照旧会被统计（不改变原有行为）。"""
+        dl = self.e.home / "Downloads" / ".bigcache"
+        dl.mkdir(parents=True)
+        for i in range(5):
+            (dl / f"s{i}.bin").write_bytes(b"x" * 2000)
+        r = self.e.run(r"""
+        import scan as S
+        orig = S.load_rules
+        def rules():
+            r = orig(); r["largeScan"] = dict(r["largeScan"], fileMinMB=1, dirMinMB=0.004); return r
+        S.load_rules = rules
+        out = S.scan(progress=lambda *a: None)
+        print("@@" + json.dumps([x["name"] for x in out["items"] if x["kind"] == "large-dir"]))
+        """)
+        self.assertIn(".bigcache", r)
+
+    @unittest.skipUnless(WIN and os.environ.get("CI"), "会注册真实的计划任务，只在 Windows CI 上跑")
+    def test_win_monitor_runs_on_battery(self):
+        """#8：后台任务在笔记本用电池时也要照常运行。"""
+        r = self.e.run(r"""
+        import re, subprocess, sys
+        from pathlib import Path
+        from plat import win
+        label = "com.rabbittux.purrge.citest"
+        ok = win.install_monitor(label, sys.executable, str(Path(sys.path[0]) / "dg.py"), 30, str(Path.home() / "m.log"), "")
+        xml = subprocess.run(["schtasks", "/Query", "/TN", win._task_name(label), "/XML"], capture_output=True, text=True, errors="replace").stdout
+        loaded = win.monitor_loaded(label)
+        win.uninstall_monitor(label)
+        get = lambda k: (re.search(f"<{k}>(\\w+)</{k}>", xml) or [None, "true"])[1]
+        print("@@" + json.dumps({"ok": ok, "loaded": loaded, "dis": get("DisallowStartIfOnBatteries"), "stop": get("StopIfGoingOnBatteries"),
+                                 "gone": not win.monitor_loaded(label)}))
+        """)
+        self.assertEqual(r, {"ok": True, "loaded": True, "dis": "false", "stop": "false", "gone": True})
+
 class TestPlatform(Base):
     """两个系统实现的接口必须一致（防止只改了一边）。"""
     def test_same_interface(self):

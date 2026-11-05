@@ -25,6 +25,7 @@ DEFAULT_CONFIG = {
     "cooldownHours": 6,         # 提醒过一次后，多久内不再打扰
     "optionalAction": "trash",  # "需你决定"的项目：trash=移到废纸篓（可找回）delete=直接删除
     "protect": [],              # 额外的保护路径（永不清理）
+    "scanDirs": [],             # 额外扫描大文件 / 大文件夹的目录，比如 D:\\项目（只会列为「需要你决定」）
     "aiEngine": "",             # claude / codex，安装时选择；留空 = 只用规则判断
     "claudePath": "",           # 安装时自动探测
     "codexPath": "",
@@ -115,6 +116,30 @@ def is_protected(path, cfg, rules):
         if prot in path.parents and not exempt:  # 豁免只放行「上层整体保护」，自身或里面受保护的照旧
             return True
     return False
+
+
+_SYSTEM_DIRS = ("/System", "/Library", "/Applications", "/usr", "/bin", "/sbin", "/opt", "/cores", "/dev", "/etc",
+                "/private/etc", "/private/var/db", "/private/var/vm")
+
+
+def scan_dir_problem(raw, cfg=None, rules=None):
+    """检查一个「额外扫描目录」能不能用：能用返回 None，不能用返回原因。
+    只允许普通的数据目录 / 其他分区：系统盘根目录、系统目录、用户主目录及其上层（内置扫描已覆盖，且会把系统文件扫进来）一律拒绝。"""
+    p = _resolved(os.path.abspath(str(expand(raw))))     # Windows 上 "/" 要先变成 C:\ 才认得出是系统盘根目录
+    if not p.is_dir():
+        return "不是一个存在的文件夹"
+    home = _resolved(HOME)
+    if p == home or p in home.parents:
+        return "用户主目录已经在默认扫描范围内，不需要添加（也不能添加它的上层目录）"
+    if sys.platform == "win32":
+        system_drive = _resolved(os.environ.get("SystemDrive", "C:") + "\\")
+        if p == system_drive:
+            return "不能添加系统盘根目录，请添加具体的文件夹"
+    elif p == Path("/") or any(p == Path(d) or Path(d) in p.parents for d in _SYSTEM_DIRS):
+        return "不能添加系统目录"
+    if is_protected(p, cfg if cfg is not None else load_config(), rules if rules is not None else load_rules()):
+        return "这个位置在保护名单里"
+    return None
 
 
 def new_run_dir():

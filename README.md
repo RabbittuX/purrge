@@ -212,6 +212,7 @@ purrge update
 | 重新打开上次的审查页 | `purrge review` | — |
 | 查看状态 | `purrge status` | "硬盘还剩多少" |
 | 修改阈值 | `purrge config thresholdGB 20` | "阈值改成 20G" |
+| 额外扫描其他目录 / 分区 | `purrge config scanDirs add D:\项目`（`remove` 移除、`clear` 清空） | "把 D 盘的项目文件夹也扫一下" |
 | 查看 / 切换 AI 引擎 | `purrge engine`、`purrge engine workbuddy` | — |
 | 更新到最新版 | `purrge update` | "帮我更新 Purrge" |
 | 停用提醒 | `purrge uninstall` | "关掉磁盘提醒" |
@@ -274,7 +275,8 @@ purrge uninstall --purge   # 同时删除设置、扫描记录以及 Purrge 自�
 | `intervalMinutes` | `30` | 后台检测间隔（分钟） |
 | `cooldownHours` | `6` | 提醒后的静默时长（小时） |
 | `optionalAction` | `trash` | 「需要你决定」类项目的处理方式：`trash` 移至废纸篓，`delete` 直接删除 |
-| `protect` | `[]` | 自定义保护路径，始终不予清理 |
+| `protect` | `[]` | 自定义保护路径，始终不予清理；`purrge config protect add <路径>` 添加 |
+| `scanDirs` | `[]` | 额外扫描大文件 / 大文件夹的目录（如其他分区上的项目文件夹），找到的项目只会列为「需要你决定」；不能添加系统盘根目录、系统目录和用户主目录本身。更新不会覆盖这项设置 |
 | `aiEngine` | 安装时选择 | AI 引擎：`claude` / `codex` / `workbuddy` / `deepseek`，可通过 `purrge engine` 切换 |
 | `claudeModel` / `codexModel` / `workbuddyModel` / `deepseekModel` | 空 | 指定模型；留空时使用默认模型，Codex 默认模型不可用时自动切换为账号可用的模型 |
 

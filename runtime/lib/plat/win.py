@@ -223,6 +223,11 @@ def install_monitor(label, python, script, interval_minutes, log_path, path_env)
     tr = f'"{py}" "{script}" check'
     p = _run(["schtasks", "/Create", "/F", "/SC", "MINUTE", "/MO", str(int(interval_minutes)), "/TN", _task_name(label), "/TR", tr])
     if p.returncode == 0:
+        # schtasks 建的任务默认「用电池时不启动、切到电池就停」，笔记本拔了电源监控会静默停跑（#8）。
+        # schtasks 没有对应参数，用 PowerShell 改设置；改不了（权限等）就保持原样，不影响任务本身。
+        _ps(f"$t = Get-ScheduledTask -TaskName {_q(_task_name(label))} -ErrorAction Stop; "
+            "$t.Settings.DisallowStartIfOnBatteries = $false; $t.Settings.StopIfGoingOnBatteries = $false; "
+            "Set-ScheduledTask -InputObject $t -ErrorAction Stop | Out-Null")
         f = monitor_file(label)
         f.parent.mkdir(parents=True, exist_ok=True)
         f.write_text(_task_name(label))
