@@ -52,8 +52,9 @@ def clean(review, ids, log=print):
                 pass
         before, _ = du_bytes(path)
         errors = []
+        trashing = it.get("tier") == "optional" and cfg.get("optionalAction", "trash") == "trash" and it.get("ruleId") != "user-trash"
         try:
-            if it.get("tier") == "optional" and cfg.get("optionalAction", "trash") == "trash" and it.get("ruleId") != "user-trash":
+            if trashing:
                 dest = _to_trash(path)
                 res["status"], res["message"] = "trashed", f"已移到废纸篓（{dest.name}），清空废纸篓后才会真正释放空间"
             elif it.get("mode") == "contents":
@@ -63,8 +64,14 @@ def clean(review, ids, log=print):
             else:
                 _rm(path, errors)
                 res["status"] = "deleted"
-        except OSError as e:
-            res["status"], res["message"] = "failed", f"失败：{e.strerror or e}"
+        except Exception as e:      # 单项失败也不能中断整批（#6：AttributeError 曾绕过 except OSError）
+            if trashing and not os.path.exists(path):
+                # 回收站接口报了错，但东西其实已经移走了（#6 里就是这样）：如实告诉用户在废纸篓，别显示失败让人重复操作
+                res["status"], res["message"] = "trashed", "已移到废纸篓，清空废纸篓后才会真正释放空间"
+                res["trashedBytes"] = before
+                log(f"{res['status']:8s} {path}")
+                continue
+            res["status"], res["message"] = "failed", f"失败：{getattr(e, 'strerror', None) or e}"
             continue
         after, _ = du_bytes(path) if os.path.exists(path) else (0, False)
         if res["status"] == "trashed":

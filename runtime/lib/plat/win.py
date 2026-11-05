@@ -16,6 +16,7 @@ _NO_WINDOW = 0x08000000   # CREATE_NO_WINDOW：后台调用不闪黑框
 def _run(cmd, **kw):
     kw.setdefault("capture_output", True)
     kw.setdefault("text", True)
+    kw.setdefault("errors", "replace")   # 解码失败也不能让 reader 线程崩掉（#6）
     kw.setdefault("creationflags", _NO_WINDOW)
     try:
         return subprocess.run(cmd, **kw)
@@ -24,7 +25,12 @@ def _run(cmd, **kw):
 
 
 def _ps(script, timeout=60):
-    return _run(["powershell", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", script], timeout=timeout)
+    # 中文 Windows 上 PowerShell 5.1 按控制台代码页（gb2312）输出，Python 侧若按 UTF-8 解码，
+    # reader 线程会抛 UnicodeDecodeError → stderr 变成 None → to_trash 里 AttributeError（#6）。
+    # 这里先把 PowerShell 的输出编码切成 UTF-8，与 subprocess 的编码保持一致。
+    prelude = "[Console]::OutputEncoding=[Text.Encoding]::UTF8; "
+    return _run(["powershell", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass",
+                 "-Command", prelude + script], timeout=timeout, encoding="utf-8")
 
 
 def _q(s):
@@ -141,7 +147,7 @@ def to_trash(path, home):
     p = _ps("Add-Type -AssemblyName Microsoft.VisualBasic; "
             f"[Microsoft.VisualBasic.FileIO.FileSystem]::{kind}({_q(path)}, 'OnlyErrorDialogs', 'SendToRecycleBin')", timeout=600)
     if p.returncode != 0 or os.path.exists(path):
-        raise OSError(p.stderr.strip() or "移到回收站失败")
+        raise OSError((p.stderr or "").strip() or "移到回收站失败")
     return Path("回收站") / Path(path).name
 
 
