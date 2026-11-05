@@ -12,6 +12,12 @@
 
 <img src="https://img.shields.io/badge/macOS%20%7C%20Windows-1c1b22?style=flat-square" alt="macOS | Windows"> <img src="https://img.shields.io/badge/AI-Claude_Code_%7C_Codex_%7C_WorkBuddy_%7C_DeepSeek-f2a33a?style=flat-square" alt="AI 引擎"> <img src="https://img.shields.io/badge/License-PolyForm_Noncommercial-e5484d?style=flat-square" alt="License">
 
+<br><br>
+
+<a href="https://static.yellowrabbit.online/purrge/index.html#download"><img src="https://img.shields.io/badge/%E4%B8%8B%E8%BD%BD%20Mac%20%E7%89%88-%E5%89%8D%E5%BE%80%E5%AE%98%E7%BD%91-f0882a?style=for-the-badge&logo=apple&logoColor=white" alt="下载 Mac 版（前往官网）" height="40"></a>
+
+<sub>Mac 应用安装包只在<a href="https://static.yellowrabbit.online/purrge/index.html#download">官网</a>发布 · 命令行版安装方法见下方<a href="#-安装">「安装」</a></sub>
+
 <br>
 
 <img src="docs/screenshots/review.png" alt="Purrge 审查页" width="100%">
@@ -19,6 +25,23 @@
 </div>
 
 <br>
+
+## 🍎 Mac 应用（1.0 新发布）
+
+不想用终端？Purrge for Mac 把命令行版的功能做成了图形界面应用，下载打开就能用：
+
+- **菜单栏 + 桌面悬浮球**：扫描和 AI 判断的进度随时看得到，空间不够时悬浮球亮起提醒
+- **守护**：后台定时检查剩余空间，在线、暂停、多久后再检查一目了然，每次检查和扫描都有记录
+- **在应用里切换 AI**：Claude Code、Codex、WorkBuddy、DeepSeek，安装和登录都在应用里一步步完成，不用开终端
+- **白名单、深色模式、开机自启**，设置和命令行版共用
+
+macOS 13 及以上 · Apple 芯片与 Intel 通用 · 不收费
+
+**👉 [前往官网下载 Mac 版](https://static.yellowrabbit.online/purrge/index.html#download)**
+
+> 安装包**只在官网发布**，GitHub 上不提供下载；其他地方的同名安装包请不要安装。
+> Mac 应用目前没有开源，本仓库是命令行版（macOS / Windows）的源码。
+> 第一次打开时 macOS 会提示「无法验证开发者」，下载时官网会显示「安装必读」，按步骤允许一次即可。
 
 ## 🆕 v0.3.5 更新内容
 
@@ -103,6 +126,8 @@
 </table>
 
 ## 🚀 安装
+
+> 🍎 Mac 上想用图形界面应用（不用终端）：[到官网下载 Mac 版](https://static.yellowrabbit.online/purrge/index.html#download)。下面是命令行版的安装方法。
 
 > [!WARNING]
 > **请认准官方来源。** Purrge 只有两个官方仓库：`RabbittuX/purrge` 和 `RabbittuX/homebrew-tap`（作者名 RabbittuX，两个 t、结尾大写 X）。
