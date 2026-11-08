@@ -4,6 +4,7 @@ import os
 import secrets
 import threading
 import time
+from urllib.parse import parse_qs, urlsplit
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -11,6 +12,7 @@ from pathlib import Path
 import plat
 from clean import clean
 from common import WEB_DIR, disk_status, load_config, save_config
+from volume_scan import fixed_volumes, save_volume_scan, scan_volume, with_volume_scans
 
 IDLE_LIMIT = 30 * 60
 WORDS = {"访达": plat.FILE_MANAGER, "废纸篓": "回收站" if plat.NAME == "Windows" else "废纸篓"}
@@ -28,7 +30,10 @@ def serve(run_dir, open_browser=True, log=print):
     run_dir = Path(run_dir)
     review = json.loads((run_dir / "review.json").read_text(encoding="utf-8"))
     token = secrets.token_urlsafe(16)
-    state = {"last": time.time(), "done": False}
+    state = {"last": time.time(), "done": False, "busy": False}
+    scan_lock = threading.Lock()
+    def current_review():
+        return with_volume_scans(run_dir, review)
     page = localize((WEB_DIR / "review.html").read_text(encoding="utf-8"))
 
     class H(BaseHTTPRequestHandler):
@@ -48,13 +53,13 @@ def serve(run_dir, open_browser=True, log=print):
 
         def do_GET(self):
             state["last"] = time.time()
-            if self.path.startswith("/?") or self.path == "/":
+            if urlsplit(self.path).path == "/":
                 return self._send(200, page.encode(), "text/html")
             if not self._authed():
                 return self._send(403, {"error": "forbidden"})
-            if self.path.startswith("/api/review"):
+            if urlsplit(self.path).path == "/api/review":
                 free, total = disk_status()
-                data = {"review": review, "config": load_config(), "freeBytes": free, "totalBytes": total}
+                data = {"review": current_review(), "config": load_config(), "freeBytes": free, "totalBytes": total, "volumes": fixed_volumes()}
                 try:
                     import update
                     if update.available():
@@ -70,10 +75,29 @@ def serve(run_dir, open_browser=True, log=print):
                 return self._send(403, {"error": "forbidden"})
             n = int(self.headers.get("Content-Length") or 0)
             body = json.loads(self.rfile.read(n) or b"{}")
+            if self.path == "/api/scan-volume":
+                volume = body.get("volume")
+                allowed = next((v for v in fixed_volumes() if isinstance(volume, str) and volume.casefold() == v.casefold()), None)
+                if plat.NAME != "Windows" or not allowed:
+                    return self._send(400, {"error": "请选择当前可读的本地固定盘"})
+                with scan_lock:
+                    if state["done"] or state["busy"]:
+                        return self._send(409, {"error": "当前审查已结束或正在处理，请重新扫描"})
+                    state["busy"] = True
+                try:
+                    result = scan_volume(allowed, load_config())
+                    save_volume_scan(run_dir, allowed, result)
+                    free, total = disk_status()
+                    return self._send(200, {"review": current_review(), "volumes": fixed_volumes(),
+                                            "freeBytes": free, "totalBytes": total})
+                except OSError as e:
+                    return self._send(500, {"error": "无法完成本地扫描：" + str(e)[:160]})
+                finally:
+                    state["busy"] = False
             if self.path == "/api/clean":
                 ids = [str(i) for i in body.get("ids", [])]
                 try:
-                    out = clean(review, ids, log=log)
+                    out = clean(current_review(), ids, log=log)
                 except Exception as e:   # 兜底：哪怕整批崩了也要回 JSON，不能只回 500 让前端一直转圈（#6）
                     log(f"clean failed: {e!r}")
                     return self._send(200, {"results": [], "freedBytes": 0, "error": f"清理失败：{e}"})
@@ -94,7 +118,7 @@ def serve(run_dir, open_browser=True, log=print):
                     install_monitor(cfg)
                 return self._send(200, {"ok": True, "config": cfg})
             if self.path == "/api/reveal":          # 在访达中打开（只允许本次清单里的项目，只看不改）
-                it = next((x for x in review["items"] if x["id"] == str(body.get("id"))), None)
+                it = next((x for x in current_review()["items"] if x["id"] == str(body.get("id"))), None)
                 if not it or not os.path.exists(it["path"]):
                     return self._send(200, {"ok": False})
                 folder = os.path.isdir(it["path"]) and not plat.is_package(it["path"])
