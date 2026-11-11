@@ -2,13 +2,14 @@
 AI 引擎可以是 Claude Code、Codex、WorkBuddy 或 DeepSeek Harness（见 engines.py），都只读、不能执行删除；AI 不可用时按知识库规则兜底。"""
 import json
 import re
+import sys
 import time
 from pathlib import Path
 
 import engines
 from common import APP_DIR, human, load_config, save_config
 
-PROMPT_FILE = APP_DIR / "rules" / "ai-rules.md"
+PROMPT_FILE = APP_DIR / "rules" / ("ai-rules.win.md" if sys.platform == "win32" else "ai-rules.md")   # 提示词按系统分开，和 registry 一样
 
 
 def _brief(items):

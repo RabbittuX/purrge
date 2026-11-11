@@ -647,6 +647,19 @@ class TestPlatform(Base):
                 self.assertIn(rule["tier"], ("primary", "optional", "keep"))
             self.assertIn("~/.purrge", r["protected"], f)
 
+    def test_ai_prompt_per_platform(self):
+        """Windows 不能用写着 macOS 的提示词（issue #12）；两份规则除系统相关内容外要一致。"""
+        mac = (ROOT / "runtime/rules/ai-rules.md").read_text(encoding="utf-8")
+        win = (ROOT / "runtime/rules/ai-rules.win.md").read_text(encoding="utf-8")
+        self.assertIn("macOS 磁盘清理顾问", mac)
+        self.assertIn("Windows 磁盘清理顾问", win)
+        self.assertNotIn("macOS", win)
+        self.assertNotIn(".dmg", win)
+        for key in ("## 三个档位", "## 硬规则", "## 每项输出", "## 输出格式", "items 必须覆盖候选清单里的每一个 id"):
+            self.assertIn(key, win)
+        src = (LIB / "classify.py").read_text(encoding="utf-8")
+        self.assertIn('"ai-rules.win.md" if sys.platform == "win32"', src)
+
 
 class TestNodeAutoInstall(Base):
     """没有 Node.js 时自动安装：已有 npm 不动、用户拒绝不装、官方压缩包核对 SHA256、装好后能用来装 WorkBuddy。"""
