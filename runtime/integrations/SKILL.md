@@ -12,7 +12,7 @@ description: Purrge by RabbittuX，macOS 磁盘清理工具。用户说"磁盘�
 | 还剩多少空间 / 提醒开着没 | `status` |
 | 改阈值、检查频率、删除方式 | `config thresholdGB 20`、`config intervalMinutes 60`、`config optionalAction trash` 或 `delete` |
 | 也扫一下别的目录 / 其他分区（如 D 盘项目文件夹） | `config scanDirs add <路径>`（`remove <路径>` 移除，`clear` 清空；系统盘根目录、系统目录、用户主目录不能添加） |
-| 换用 Claude Code / Codex 判断 | `engine claude` / `codex` / `workbuddy` / `deepseek`（需要在终端里交互，请让用户自己运行） |
+| 换用 Claude Code / Codex / Pi 判断 | `engine claude` / `codex` / `workbuddy` / `deepseek` / `pi`（需要在终端里交互，请让用户自己运行） |
 | 更新 Purrge | `update`（自动备份，失败自动回滚，设置保留） |
 | 关掉提醒 / 卸载 | `uninstall`（`--purge` 连设置和记录一起删） |
 

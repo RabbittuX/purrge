@@ -36,7 +36,7 @@
     "excludeUnder": ["~/AppData", "~/OneDrive"]
   },
   "protected": [
-    "~/.claude", "~/.codex", "~/.ssh", "~/.gnupg", "~/.config", "~/.purrge", "~/.codebuddy", "~/.workbuddy",
+    "~/.claude", "~/.codex", "~/.pi", "~/.ssh", "~/.gnupg", "~/.config", "~/.purrge", "~/.codebuddy", "~/.workbuddy",
     "~/.cache/whisper", "~/.cache/huggingface", "~/.cache/torch", "~/.ollama",
     "~/OneDrive", "%APPDATA%/Microsoft", "%LOCALAPPDATA%/Microsoft",
     "%LOCALAPPDATA%/JianyingPro/User Data/Projects", "%LOCALAPPDATA%/CapCut/User Data/Projects",

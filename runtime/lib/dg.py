@@ -1,11 +1,11 @@
-"""Purrge by RabbittuX：macOS / Windows 磁盘清理，AI（Claude Code、Codex、WorkBuddy 或 DeepSeek Harness）判断，你确认后才清理。
+"""Purrge by RabbittuX：macOS / Windows 磁盘清理，AI（Claude Code、Codex、WorkBuddy、DeepSeek Harness 或 Pi）判断，你确认后才清理。
 
 用法：purrge <命令>
   install                  安装：选择 AI、检查安装和登录、设阈值、开启后台监控
-                           （可加 --engine claude|codex|workbuddy|deepseek --threshold 15 --yes）
+                           （可加 --engine claude|codex|workbuddy|deepseek|pi --threshold 15 --yes）
   scan                     立即扫描，完成后自动打开审查页面
   status                   剩余空间、阈值、AI 和后台监控状态
-  engine [名称]            查看或切换 AI：claude / codex / workbuddy / deepseek
+  engine [名称]            查看或切换 AI：claude / codex / workbuddy / deepseek / pi
   config [键 值]           查看或修改设置，如：config thresholdGB 20
   review                   重新打开最近一次的审查页面
   update                   更新到最新版（设置、扫描记录、AI 引擎都保留）
@@ -58,10 +58,11 @@ def cmd_setup(args):          # 兼容旧命令
 
 def _monitor_path(cfg):
     """后台任务的 PATH：带上 AI 命令行和 node（npm 装的 codex 需要 node）所在目录。"""
-    dirs = ["/usr/local/bin", "/opt/homebrew/bin", str(Path.home() / ".local/bin")]
-    for key in ("claudePath", "codexPath"):
-        if cfg.get(key):
-            dirs.append(str(Path(cfg[key]).parent))
+    dirs = ["/usr/local/bin", "/opt/homebrew/bin", str(Path.home() / ".local/bin"), str(Path.home() / ".pi/agent/bin")]
+    import engines
+    for engine in engines.NAMES:
+        if cfg.get(f"{engine}Path"):
+            dirs.append(str(Path(cfg[f"{engine}Path"]).parent))
     if shutil.which("node"):
         dirs.append(str(Path(shutil.which("node")).parent))
     dirs += ["/usr/bin", "/bin", "/usr/sbin", "/sbin"]

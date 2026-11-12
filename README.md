@@ -8,7 +8,7 @@
 
 <sub>名称取自 purr（猫咪呼噜）与 purge（清除）· by RabbittuX</sub>
 
-<img src="https://img.shields.io/badge/macOS%20%7C%20Windows-1c1b22?style=flat-square" alt="macOS | Windows"> <img src="https://img.shields.io/badge/AI-Claude_Code_%7C_Codex_%7C_WorkBuddy_%7C_DeepSeek-f2a33a?style=flat-square" alt="AI 引擎"> <img src="https://img.shields.io/badge/License-PolyForm_Noncommercial-e5484d?style=flat-square" alt="License">
+<img src="https://img.shields.io/badge/macOS%20%7C%20Windows-1c1b22?style=flat-square" alt="macOS | Windows"> <img src="https://img.shields.io/badge/AI-Claude_Code_%7C_Codex_%7C_WorkBuddy_%7C_DeepSeek_%7C_Pi-f2a33a?style=flat-square" alt="AI 引擎"> <img src="https://img.shields.io/badge/License-PolyForm_Noncommercial-e5484d?style=flat-square" alt="License">
 
 <br><br>
 
@@ -37,7 +37,7 @@
 
 **🧠 AI 智能分析**
 
-调用本机的 Claude Code、Codex、WorkBuddy 或 DeepSeek Harness，对缓存、安装包、媒体文件及历史项目逐项评估，说明其用途、闲置时长及清理影响。
+调用本机的 Claude Code、Codex、WorkBuddy、DeepSeek Harness 或 Pi，对缓存、安装包、媒体文件及历史项目逐项评估，说明其用途、闲置时长及清理影响。
 
 </td>
 <td width="33%" valign="top">
@@ -191,7 +191,7 @@ curl -fsSL https://codeload.github.com/RabbittuX/purrge/tar.gz/refs/heads/master
 git clone https://github.com/RabbittuX/purrge.git
 cd purrge && bash install.sh
 
-# 非交互式安装（engine 可选 claude / codex / workbuddy / deepseek）
+# 非交互式安装（engine 可选 claude / codex / workbuddy / deepseek / pi）
 bash install.sh --engine codex --threshold 20 --yes
 ```
 
@@ -228,7 +228,7 @@ Install-Purrge
 
 #### 由 AI 代为安装（macOS / Windows）
 
-在 Claude Code、Codex 或 WorkBuddy 中输入：
+在 Claude Code、Codex、WorkBuddy 或 Pi 中输入：
 
 > 帮我安装 GitHub 上的 RabbittuX/purrge，只认作者 RabbittuX，找不到就先问我，不要安装同名的其他项目
 
@@ -236,7 +236,7 @@ AI 会读取本仓库的[安装指引](#-ai-助手安装指引)完成安装，�
 
 #### 安装过程
 
-1. **选择 AI 引擎**：Claude Code、Codex、WorkBuddy 或 DeepSeek Harness（由 AI 代为安装时自动选择当前 AI）。
+1. **选择 AI 引擎**：Claude Code、Codex、WorkBuddy、DeepSeek Harness 或 Pi（由 AI 代为安装时自动选择当前 AI）。
 2. **设置提醒阈值**：剩余空间低于该值时发出提醒，默认 15 GB。
 3. **配置 AI 引擎**：未安装时自动安装最新版本（需要 Node.js 时先询问并自动安装）；未登录时引导登录；最后进行连接测试，确认引擎可正常响应。
 4. **启用后台监控**：安装完成后，Purrge 以后台服务形式独立运行，无需保持 AI 软件处于打开状态。
@@ -249,8 +249,9 @@ AI 会读取本仓库的[安装指引](#-ai-助手安装指引)完成安装，�
 | Codex | `codex exec --sandbox read-only` | 只读沙箱，支持免费账号 |
 | WorkBuddy | CodeBuddy 命令行 `codebuddy -p --tools ""` | 关闭全部工具；与 WorkBuddy 同一账号、同一积分；首次需运行 `codebuddy` 并输入 `/login` 登录 |
 | DeepSeek Harness | `dsh --profile headless` + 关工具补丁 | 关闭全部工具，补丁未生效时拒绝调用；需要 DeepSeek API Key，只保存在本机 |
+| Pi | `pi --print --mode json --no-tools --exclude-tools "*"` | 关闭全部工具（含扩展与 MCP），事件流里出现工具调用即弃用；模型来源由 Pi 自己管理（`pi` 里运行 `/login`），指定的模型不可用时退回它的默认模型 |
 
-随时切换：`purrge engine claude | codex | workbuddy | deepseek`。
+随时切换：`purrge engine claude | codex | workbuddy | deepseek | pi`。
 
 ### 🔄 更新
 
@@ -267,7 +268,7 @@ purrge update
 
 ### 🐾 使用方法
 
-| 操作 | 终端命令 | 在 Claude Code / Codex / WorkBuddy 中说 |
+| 操作 | 终端命令 | 在 Claude Code / Codex / WorkBuddy / Pi 中说 |
 |---|---|---|
 | 立即扫描 | `purrge scan` | "磁盘快满了，帮我清理一下" |
 | 重新打开上次的审查页 | `purrge review` | — |
@@ -298,8 +299,8 @@ purrge uninstall --purge   # 同时删除设置、扫描记录以及 Purrge 自�
 
 - macOS 或 Windows 10/11
 - Python 3.8 及以上（没有时安装程序会自动安装：Mac 用苹果官方命令行开发者工具，Windows 用 python.org 官方安装包，无需管理员权限）
-- 使用 WorkBuddy / DeepSeek（以及 Windows 上的 Codex）时需要 Node.js；没有时自动下载官方 LTS 版本到 Purrge 自己的目录，不改动系统
-- Claude Code、Codex、WorkBuddy 或 DeepSeek Harness 任一可用账号（AI 分析使用用户自己的额度，支持 Codex 免费账号；DeepSeek 使用自己的 API Key）。AI 暂时不可用时自动切换为规则判断，基础功能不受影响
+- 使用 WorkBuddy / DeepSeek / Pi（以及 Windows 上的 Codex）时需要 Node.js；没有时自动下载官方 LTS 版本到 Purrge 自己的目录，不改动系统
+- Claude Code、Codex、WorkBuddy、DeepSeek Harness 或 Pi 任一可用账号（AI 分析使用用户自己的额度，支持 Codex 免费账号；DeepSeek 使用自己的 API Key；Pi 使用它自己登录的模型来源）。AI 暂时不可用时自动切换为规则判断，基础功能不受影响
 - 可选（macOS）：为「终端」授予「完全磁盘访问权限」，以扩大系统缓存的扫描范围
 
 ### 🤖 AI 助手安装指引
@@ -323,7 +324,7 @@ purrge uninstall --purge   # 同时删除设置、扫描记录以及 Purrge 自�
    ```
 
    - 安装程序会识别当前的 AI 助手并将其设为分析引擎，阈值默认 15 GB。
-   - macOS 下用户指定了阈值时，改用 `... | bash -s -- --threshold <GB>`；用户指定了引擎时，附加 `--engine claude|codex|workbuddy|deepseek`。
+   - macOS 下用户指定了阈值时，改用 `... | bash -s -- --threshold <GB>`；用户指定了引擎时，附加 `--engine claude|codex|workbuddy|deepseek|pi`。
    - 下载 `raw.githubusercontent.com` 失败（连接被重置）时，改用「安装」一节里从 `codeload.github.com` 下载的命令。
 4. 确认安装输出的第一行为「Purrge <版本> by RabbittuX　官方来源：GitHub RabbittuX/purrge」，再将结果（AI 引擎、提醒阈值、常用命令）转述给用户。
 5. 不要自行删除或移动任何文件。所有清理都必须由用户在 Purrge 的审查页面中勾选确认。
@@ -356,7 +357,7 @@ purrge uninstall --purge   # 同时删除设置、扫描记录以及 Purrge 自�
 
 ## 🔒 安全机制
 
-- **AI 仅提供分析，不具备删除权限**：Claude Code、WorkBuddy、DeepSeek Harness 在禁用全部工具的模式下运行，Codex 在只读沙箱中运行；删除操作由脚本严格依据用户勾选的清单执行。
+- **AI 仅提供分析，不具备删除权限**：Claude Code、WorkBuddy、DeepSeek Harness、Pi 在禁用全部工具的模式下运行，Codex 在只读沙箱中运行；删除操作由脚本严格依据用户勾选的清单执行。
 - **执行前逐项复核**：确认路径仍然存在、不在保护名单内、扫描后未被修改，任一条件不满足即跳过。
 - **保护名单优先**：保护名单的优先级高于 AI 判断；用户文件不会被归入「首要清理」。
 - **本地访问控制**：审查页面仅监听 `127.0.0.1` 并使用一次性令牌，清理完成或闲置 30 分钟后自动关闭。
@@ -372,8 +373,8 @@ purrge uninstall --purge   # 同时删除设置、扫描记录以及 Purrge 自�
 | `optionalAction` | `trash` | 「需要你决定」类项目的处理方式：`trash` 移至废纸篓，`delete` 直接删除 |
 | `protect` | `[]` | 自定义保护路径，始终不予清理；`purrge config protect add <路径>` 添加 |
 | `scanDirs` | `[]` | 额外扫描大文件 / 大文件夹的目录（如其他分区上的项目文件夹），找到的项目只会列为「需要你决定」；不能添加系统盘根目录、系统目录和用户主目录本身。更新不会覆盖这项设置 |
-| `aiEngine` | 安装时选择 | AI 引擎：`claude` / `codex` / `workbuddy` / `deepseek`，可通过 `purrge engine` 切换 |
-| `claudeModel` / `codexModel` / `workbuddyModel` / `deepseekModel` | 空 | 指定模型；留空时使用默认模型，Codex 默认模型不可用时自动切换为账号可用的模型 |
+| `aiEngine` | 安装时选择 | AI 引擎：`claude` / `codex` / `workbuddy` / `deepseek` / `pi`，可通过 `purrge engine` 切换 |
+| `claudeModel` / `codexModel` / `workbuddyModel` / `deepseekModel` / `piModel` | 空 | 指定模型；留空时使用默认模型，Codex 默认模型不可用时自动切换为账号可用的模型，Pi 指定的模型不可用时退回它自己的默认模型 |
 
 </details>
 
