@@ -12,7 +12,7 @@ from volume_scan import scan_volume
 class VolumeScanTest(unittest.TestCase):
     def test_thresholds_protection_and_project_pruning(self):
         with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
+            root = Path(directory).resolve()
             files = ("setup.msi", "other.exe", "photo.raw", "small.zip",
                      "team/.git/config", "team/archive.zip", "docs/archive.zip", "private/archive.zip",
                      ".hidden/archive.zip")
