@@ -982,12 +982,13 @@ class TestScanAndServer(Base):
             except urllib.error.HTTPError as e:
                 return {"http": e.code}
         print("@@" + json.dumps({"page": urllib.request.urlopen(url).status, "review": sorted(call("/api/review").keys()),
-              "bad": call("/api/review", token="nope"), "reveal_unknown": call("/api/reveal", {"id": "zzz"})}))
+              "bad": call("/api/review", token="nope"), "reveal_unknown": call("/api/reveal", {"id": "zzz"}), "scan_unknown": call("/api/scan-volume", {"volume": "Z:\\"})}))
         ''')
         self.assertEqual(r["page"], 200)
-        self.assertEqual(r["review"], ["config", "freeBytes", "review", "totalBytes"])
+        self.assertEqual(r["review"], ["config", "freeBytes", "review", "totalBytes", "volumes"])
         self.assertEqual(r["bad"], {"http": 403})
         self.assertEqual(r["reveal_unknown"], {"ok": False})
+        self.assertEqual(r["scan_unknown"], {"http": 400})
 
 
 

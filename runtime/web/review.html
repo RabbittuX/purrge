@@ -192,6 +192,10 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:22px;height:22px;b
     </div>
   </div>
 
+<div class="panel" id="volume-tools" style="display:none;padding:12px 16px;margin:16px 0;gap:10px;align-items:center;flex-wrap:wrap">
+  <label for="volume-select">查看磁盘</label><select id="volume-select" aria-label="查看磁盘"></select>
+  <button class="btn ghost" type="button" id="scan-volume">快速扫描此盘</button><span id="volume-status" role="status" aria-live="polite" style="color:var(--sub)"></span>
+</div>
   <div id="sections"></div>
 </div>
 
@@ -258,7 +262,7 @@ function iconFor(it) {
   return { "浏览器": "globe", "开发工具": "code", "AI 工具": "spark", "系统": "gear", "用户文件": "folder" }[it.category] || "box";
 }
 
-let R, CFG, FREE, TOTAL, sel = new Set(), seg = "全部", collapsed = { keep: true };
+let R, CFG, FREE, TOTAL, VOLUMES = [], selectedVolume = "", sel = new Set(), seg = "全部", collapsed = { keep: true };
 const days = (it) => (it.lastUsed ? Math.floor((Date.now() / 1000 - it.lastUsed) / 86400) : null);
 const coveredBy = (it) => [...sel].some((id) => { const o = byId[id]; return o && o.id !== it.id && it.path.startsWith(o.path + "/"); });
 let byId = {};
@@ -293,7 +297,7 @@ function section(key, title, desc, icon, items, extra) {
 
 function render() {
   const g = { primary: [], optional: [], keep: [] };
-  R.items.forEach((it) => g[it.tier || "optional"].push(it));
+  R.items.filter((it) => !it.volume || !selectedVolume || it.volume.toLowerCase() === selectedVolume.toLowerCase()).forEach((it) => g[it.tier || "optional"].push(it));
   const cats = ["全部", ...new Set(g.optional.map((x) => x.category).filter(Boolean))];
   const opt = g.optional.filter((x) => seg === "全部" || x.category === seg);
   $("#sections").innerHTML =
@@ -388,15 +392,45 @@ $("#st-save").onclick = async () => {
   const r = await api("/api/config", body); CFG = r.config; closeAll(); render(); toast("设置已保存");
 };
 
+
+function refreshVolumeControls() {
+  const box = $("#volume-tools"), select = $("#volume-select");
+  if (!box || !VOLUMES.length) return;
+  box.style.display = "flex";
+  select.innerHTML = VOLUMES.map((v) => `<option value="${esc(v)}">${esc(v.slice(0, 2))}</option>`).join("");
+  if (!selectedVolume || !VOLUMES.some((v) => v.toLowerCase() === selectedVolume.toLowerCase())) selectedVolume = VOLUMES[0];
+  select.value = selectedVolume;
+  const scan = R.volumeScans && R.volumeScans[selectedVolume];
+  $("#volume-status").textContent = scan ? (scan.error || (scan.partial ? "扫描范围受限，可重新扫描" : "已完成快速扫描")) : "此盘尚未快速扫描";
+}
+function pruneSelectionToVolume() {
+  const visible = new Set(R.items.filter((it) => !it.volume || !selectedVolume || it.volume.toLowerCase() === selectedVolume.toLowerCase()).map((it) => it.id));
+  [...sel].forEach((id) => { if (!visible.has(id)) sel.delete(id); });
+}
+$("#volume-select").onchange = (e) => { selectedVolume = e.target.value; refreshVolumeControls(); pruneSelectionToVolume(); render(); };
+$("#scan-volume").onclick = async () => {
+  const button = $("#scan-volume");
+  button.disabled = true; button.textContent = "正在扫描…";
+  $("#volume-status").textContent = "使用本地规则扫描；不会调用 AI，也不会自动清理";
+  try {
+    const data = await api("/api/scan-volume", { volume: selectedVolume });
+    if (data.error) throw new Error(data.error);
+    R = data.review; FREE = data.freeBytes; TOTAL = data.totalBytes; VOLUMES = data.volumes || VOLUMES;
+    R.items.forEach((x) => { byId[x.id] = x; });
+    refreshVolumeControls(); render();
+  } catch (e) { $("#volume-status").textContent = e.message || "扫描失败"; }
+  finally { button.disabled = false; button.textContent = "快速扫描此盘"; }
+};
+
 api("/api/review").then((d) => {
-  R = d.review; CFG = d.config; FREE = d.freeBytes; TOTAL = d.totalBytes;
+  R = d.review; CFG = d.config; FREE = d.freeBytes; TOTAL = d.totalBytes; VOLUMES = d.volumes || []; selectedVolume = R.volume || VOLUMES[0] || "";
   R.items.forEach((x) => (byId[x.id] = x));
   R.items.filter((x) => x.tier === "primary").forEach((x) => sel.add(x.id));
   const t = new Date(R.scannedAt * 1000);
   $("#meta").innerHTML = `扫描于 ${t.toLocaleString("zh-CN", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })} · ${R.items.length} 项 <span class="pill ${R.judgedBy === "ai" ? "ai" : "rule"}">${R.judgedBy === "ai" ? (R.engine ? R.engine + " 已逐项判断" : "AI 已逐项判断") : "按规则判断"}</span>`;
   if (d.update) $("#meta").innerHTML += ` <span class="pill rule" title="在终端运行 purrge update 更新">有新版本 ${d.update}</span>`;
   if (R.summary) { $("#insight").style.display = ""; $("#insight-t").textContent = R.summary; }
-  render();
+  refreshVolumeControls(); render();
 }).catch(() => { document.body.innerHTML = '<div class="wrap" style="display:grid;place-items:center;min-height:80vh"><div class="panel" style="padding:44px;text-align:center"><h2 style="margin:0 0 6px">这个审查页面已失效</h2><p style="color:var(--sub);margin:0">请重新运行扫描（终端输入 purrge scan）。</p></div></div>'; });
 </script>
 </body>
