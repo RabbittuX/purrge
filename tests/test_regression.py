@@ -94,6 +94,42 @@ if "--dump-config" in args:
 sys.stdin.read()
 print("OK")
 '''
+# 假的 pi：--help 里有关工具的开关；真正调用时按 --mode 输出 Pi 的 JSONL 事件流
+FAKE["pi"] = r'''#!/usr/bin/env python3
+import json, os, sys
+args = sys.argv[1:]
+open(os.environ["FAKE_LOG"], "a").write(json.dumps({"bin": "pi", "args": args}) + "\n")
+if "--version" in args:
+    print("9.9.9"); sys.exit(0)
+if "--help" in args:
+    if os.environ.get("FAKE_PI_NO_FLAGS"):
+        print("Usage: pi [options] [messages...]"); sys.exit(0)
+    for f in ("--no-tools", "--exclude-tools", "--no-mcp", "--no-extensions", "--no-session", "--mode", "--print", "--tools"):
+        print(f"  {f} <x>   something")
+    sys.exit(0)
+src = sys.stdin.read()
+mode = os.environ.get("FAKE_MODE", "ok")
+model = args[args.index("--model") + 1] if "--model" in args else ""
+ev = lambda o: print(json.dumps(o, ensure_ascii=False), flush=True)
+ev({"type": "session", "version": 3, "id": "fake"})
+# 系统消息里带着这次交给模型的工具清单：没关干净时这里就不是 (none)
+tools = "(none)" if ("--no-tools" in args and "--exclude-tools" in args and "*" in args) else "- bash: Run commands"
+ev({"type": "message_end", "message": {"role": "system", "content": "", "sections": {"tools": "<tools>\n" + tools + "\n</tools>"}}})
+if mode == "fail-model" and model and model != "fake/good-model":
+    sys.stderr.write('Error: Model "' + model + '" not found. Use --list-models to see available models.')
+    sys.exit(1)
+m = json.loads(os.environ.get("FAKE_PI_ITEMS", "[]"))
+out = {"summary": "测试总结", "items": [{"id": it["id"], "tier": "primary", "title": "AI:" + it["id"], "reason": "AI 理由", "category": "测试"} for it in m]}
+text = {"ok": "这是结果：" + json.dumps(out, ensure_ascii=False), "text": "OK", "empty": "",
+        "fail-model": "这是结果：" + json.dumps(out, ensure_ascii=False),
+        "toolcall": "这是结果：" + json.dumps(out, ensure_ascii=False)}[mode]
+if mode == "toolcall":     # 工具没关干净：事件流里会出现工具调用
+    ev({"type": "tool_execution_start", "toolCallId": "t1", "toolName": "bash", "args": {}})
+if mode == "empty":
+    sys.exit(0)
+ev({"type": "message_end", "message": {"role": "assistant", "content": [{"type": "text", "text": text}],
+                                      "provider": "fake", "model": model or "default-model", "stopReason": "stop"}})
+'''
 
 
 class Env:
@@ -476,13 +512,112 @@ class TestNewEngines(Base):
         r = self.e.run(r'''
         import installer
         res = {}
-        for ans in ("", "1", "2", "3", "4", "codex", "9"):
+        for ans in ("", "1", "2", "3", "4", "5", "codex", "9"):
             installer.ask = lambda prompt, default="", a=ans: a or default
             installer.has_tty = lambda: True
             res[ans or "回车"] = installer.choose_engine([])
         print("@@" + json.dumps(res))
         ''')
-        self.assertEqual(r, {"回车": "claude", "1": "claude", "2": "codex", "3": "workbuddy", "4": "deepseek", "codex": "codex", "9": "claude"})
+        self.assertEqual(r, {"回车": "claude", "1": "claude", "2": "codex", "3": "workbuddy", "4": "deepseek",
+                             "5": "pi", "codex": "codex", "9": "claude"})
+
+    def test_pi_caller_detected(self):
+        """Pi 里跑 purrge install 时，要能认出是 Pi 在代为安装。"""
+        self.e.extra["PI_CODING_AGENT"] = "true"
+        r = self.e.run(r'''
+        import installer
+        installer.has_tty = lambda: False
+        print("@@" + json.dumps(installer.choose_engine([])))
+        ''')
+        self.assertEqual(r, "pi")
+
+
+class TestPiEngine(Base):
+    """Pi（pi.dev）：关掉全部工具、只认 JSONL 里的助手回复、模型不可用时退回默认模型。"""
+
+    def test_pi_no_tools_and_reply(self):
+        r = self.e.run(r'''
+        import engines, shutil, json
+        cfg = {"aiEngine": "pi", "piPath": shutil.which("pi")}
+        print("@@" + json.dumps(list(engines.test(cfg, log=lambda *a: None))))
+        ''')
+        self.assertEqual(r, [True, "", ""])
+        a = [c["args"] for c in self.e.calls() if c["bin"] == "pi" and "--print" in c["args"]][0]
+        self.assertIn("--no-tools", a)
+        self.assertEqual(a[a.index("--exclude-tools") + 1], "*", "最后一道过滤：连扩展塞进来的工具也要关掉")
+        self.assertIn("--no-session", a)
+        self.assertIn("--no-extensions", a, "用户装的扩展不能参与判断（它们可能自带工具）")
+        self.assertEqual(a[a.index("--mode") + 1], "json")
+
+    def test_pi_refuses_without_tool_flags(self):
+        """pi 版本变化、帮助里找不到关工具的开关时，宁可不用也不能让它带着工具跑。"""
+        self.e.extra["FAKE_PI_NO_FLAGS"] = "1"
+        r = self.e.run(r'''
+        import engines, shutil
+        print("@@" + json.dumps(list(engines.test({"aiEngine": "pi", "piPath": shutil.which("pi")}, log=lambda *a: None))))
+        ''')
+        self.assertFalse(r[0]); self.assertIn("工具", r[2])
+        self.assertFalse([c for c in self.e.calls() if c["bin"] == "pi" and "--print" in c["args"]],
+                         "工具没关掉时绝不能真正调用")
+
+    def test_pi_tool_call_rejected(self):
+        """事件流里出现工具调用 = 没关干净，这次结果不能用。"""
+        self.e.extra["FAKE_MODE"] = "toolcall"
+        r = self.e.run(r'''
+        import engines, shutil
+        try:
+            engines.ask({"aiEngine": "pi", "piPath": shutil.which("pi")}, "hi", log=lambda *a: None)
+            print("@@" + json.dumps("no-error"))
+        except engines.AIError as e:
+            print("@@" + json.dumps(str(e)))
+        ''')
+        self.assertIn("工具", r)
+
+    def test_pi_model_fallback(self):
+        """指定的模型不可用（名字写错 / 来源分不清）时，退回 Pi 当前的默认模型。"""
+        self.e.extra["FAKE_MODE"] = "fail-model"
+        r = self.e.run(r'''
+        import engines, shutil
+        cfg = {"aiEngine": "pi", "piPath": shutil.which("pi"), "piModel": "bad-model"}
+        logs = []
+        print("@@" + json.dumps(list(engines.test(cfg, log=logs.append))))
+        ''')
+        self.assertEqual(r, [True, "", ""])
+        models = [c["args"][c["args"].index("--model") + 1] for c in self.e.calls()
+                  if c["bin"] == "pi" and "--print" in c["args"] and "--model" in c["args"]]
+        self.assertEqual(models[:1], ["bad-model"], "先按用户指定的模型试")
+        self.assertEqual(len([c for c in self.e.calls() if c["bin"] == "pi" and "--print" in c["args"] and "--model" not in c["args"]]), 1,
+                         "失败后不带 --model 再试一次")
+
+    def test_pi_npm_install_flags(self):
+        """装 Pi 用官方 npm 包，并且按官方建议不跑依赖的生命周期脚本。"""
+        r = self.e.run(r'''
+        import engines
+        calls = []
+        engines.nodejs.ensure = lambda say, confirm: "npm"
+        engines._npm_install = lambda pkg, npm, engine=None: calls.append([pkg, engine, list(engines.NPM_FLAGS.get(engine, ()))] or True)
+        engines.find = lambda e: "/fake/pi"
+        got = engines.install("pi", say=lambda m: None, confirm=lambda q: True)
+        print("@@" + json.dumps({"got": got, "calls": calls, "pkg": engines.NPM_PKG["pi"]}))
+        ''')
+        self.assertEqual(r["got"], "/fake/pi")
+        self.assertEqual(r["pkg"], "@earendil-works/pi-coding-agent@latest")
+        self.assertEqual(r["calls"], [["@earendil-works/pi-coding-agent@latest", "pi", ["--ignore-scripts"]]])
+
+    def test_pi_classify(self):
+        """整条判断流程：Pi 返回的 JSON 直接被 classify 用上。"""
+        self.e.extra["FAKE_PI_ITEMS"] = json.dumps([{"id": "c001"}, {"id": "c002"}, {"id": "c003"}])
+        r = self.e.run(textwrap.dedent(TestClassify.CAND) + textwrap.dedent(r'''
+        import engines, shutil, json
+        from common import load_config, save_config
+        c = load_config(); c.update(aiEngine="pi", piPath=shutil.which("pi")); save_config(c)
+        from classify import classify
+        rv = classify(cand, log=lambda *a: None)
+        print("@@" + json.dumps({"by": rv["judgedBy"], "tiers": {x["id"]: x["tier"] for x in rv["items"]},
+                                 "engine": rv["engine"], "title": rv["items"][0]["title"]}))
+        '''))
+        self.assertEqual(r, {"by": "ai", "tiers": {"c001": "primary", "c002": "optional", "c003": "keep"},
+                             "engine": "Pi", "title": "AI:c001"})
 
 
 class TestConfig(Base):

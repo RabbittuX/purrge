@@ -438,6 +438,7 @@
   "protected": [
     "~/.claude",
     "~/.codex",
+    "~/.pi",
     "~/.ssh",
     "~/.gnupg",
     "~/.config",

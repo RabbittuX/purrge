@@ -1,4 +1,4 @@
-"""AI 引擎：Claude Code、Codex、WorkBuddy（CodeBuddy 命令行）、DeepSeek Harness（dsh）。负责找到命令行工具、安装最新版、检查/拉起登录、调用 AI。
+"""AI 引擎：Claude Code、Codex、WorkBuddy（CodeBuddy 命令行）、DeepSeek Harness（dsh）、Pi（pi）。负责找到命令行工具、安装最新版、检查/拉起登录、调用 AI。
 Purrge 本身不依赖任何一家，引擎不可用时 classify.py 会退回规则判断。"""
 import contextlib
 import json
@@ -16,13 +16,18 @@ from pathlib import Path
 import nodejs
 
 HOME = Path.home()
-NAMES = {"claude": "Claude Code", "codex": "Codex", "workbuddy": "WorkBuddy", "deepseek": "DeepSeek Harness"}
-BIN = {"claude": "claude", "codex": "codex", "workbuddy": "codebuddy", "deepseek": "dsh"}
-NPM_PKG = {"workbuddy": "@tencent-ai/codebuddy-code@latest", "deepseek": "@deepseek-ai/dsh@latest"}
+NAMES = {"claude": "Claude Code", "codex": "Codex", "workbuddy": "WorkBuddy", "deepseek": "DeepSeek Harness",
+         "pi": "Pi"}
+BIN = {"claude": "claude", "codex": "codex", "workbuddy": "codebuddy", "deepseek": "dsh", "pi": "pi"}
+NPM_PKG = {"workbuddy": "@tencent-ai/codebuddy-code@latest", "deepseek": "@deepseek-ai/dsh@latest",
+           "pi": "@earendil-works/pi-coding-agent@latest"}
+NPM_FLAGS = {"pi": ("--ignore-scripts",)}     # Pi 官方推荐：安装时不跑依赖的生命周期脚本
 DSH_PATCH = Path(__file__).resolve().parent.parent / "rules" / "dsh-notools.yml"
 DSH_TOOL_PLUGINS = ("tool-bash", "tool-pwsh", "tool-jobs", "tool-fs")
 SECRETS = Path(os.environ.get("PURRGE_HOME", HOME / ".purrge")) / "secrets.json"   # 只存 DeepSeek API Key，权限 600
 MODEL_ERRORS = ("not supported", "requires a newer version", "model_not_found", "does not exist", "invalid model")
+# Pi 指定了模型却用不了（名字写错、同一模型有多个来源分不清）时，自动退回默认模型再试一次
+PI_MODEL_ERRORS = ("not found", "ambiguous", "no api key found")
 
 
 @contextlib.contextmanager
@@ -70,9 +75,17 @@ def _desktop_paths(engine, local):
     return found
 
 
+def _managed_paths(engine):
+    """不走 npm、由官方安装程序自己管理的命令行位置。"""
+    if engine == "pi":   # pi.dev 的安装脚本把命令放在 ~/.pi/agent/bin（Windows 上是 pi.cmd，也在 PATH 里）
+        return [HOME / ".pi/agent/bin" / ("pi.cmd" if sys.platform == "win32" else "pi")]
+    return []
+
+
 def _candidates(engine):
     found = shutil.which(BIN.get(engine, engine))
     paths = [found] if found else []
+    paths += _managed_paths(engine)
     if engine in NPM_PKG:    # npm 全局安装的命令行
         b = BIN[engine]
         exe = f"{b}.cmd" if sys.platform == "win32" else b
@@ -120,8 +133,8 @@ def version_text(path):
 
 # ---------- 安装 ----------
 
-def _npm_install(pkg, npm):
-    subprocess.run([npm, "install", "-g", pkg], env=nodejs.env())
+def _npm_install(pkg, npm, engine=None):
+    subprocess.run([npm, "install", "-g", *NPM_FLAGS.get(engine, ()), pkg], env=nodejs.env())
 
 
 def install(engine, say=print, confirm=None):
@@ -132,7 +145,7 @@ def install(engine, say=print, confirm=None):
             say(f"{NAMES[engine]} 需要 Node.js（自带 npm）：可以从 https://nodejs.org 手动安装，装好后重新运行安装命令")
             return None
         say(f"正在安装最新版 {NAMES[engine]} 命令行（npm）…")
-        _npm_install(NPM_PKG[engine], npm)
+        _npm_install(NPM_PKG[engine], npm, engine)
         return find(engine)
     if engine == "claude":
         say("正在安装最新版 Claude Code（官方安装脚本）…")
@@ -162,9 +175,15 @@ def install(engine, say=print, confirm=None):
 
 def upgrade(engine, path, say=print):
     """把已有的命令行工具升级到最新版。"""
+    if engine == "pi":   # 官方安装程序装的那份用 pi update 自己升级；失败再退回 npm
+        if _run([path, "update"], timeout=600).returncode == 0:
+            return find(engine)
+        if nodejs.npm():
+            _npm_install(NPM_PKG["pi"], nodejs.npm(), "pi")
+        return find(engine)
     if engine in NPM_PKG:
         if nodejs.npm():
-            _npm_install(NPM_PKG[engine], nodejs.npm())
+            _npm_install(NPM_PKG[engine], nodejs.npm(), engine)
         return find(engine)
     if engine == "claude":
         subprocess.run([path, "update"])
@@ -223,6 +242,10 @@ def save_deepseek_key(key):
 def logged_in(engine, path):
     if engine == "workbuddy":
         return None              # CodeBuddy 没有登录状态命令，交给连接测试判断
+    if engine == "pi":
+        # Pi 的登录状态跟「用哪个来源的哪个模型」绑在一起（pi auth check 必须指定 provider 或 model），
+        # 而且还可以只靠环境变量里的 Key 工作：这里不猜，交给连接测试判断
+        return None
     if engine == "deepseek":
         return bool(deepseek_key())
     if engine == "claude":
@@ -238,6 +261,9 @@ def login(engine, path):
     """在当前终端里拉起官方登录流程（会打开浏览器）。"""
     if engine == "workbuddy":   # CodeBuddy 只能在交互界面里用 /login 登录
         print("即将打开 CodeBuddy（WorkBuddy 同一账号、同一积分）：请输入 /login 完成登录，登录成功后输入 /exit 返回。", flush=True)
+        return subprocess.run([path]).returncode == 0
+    if engine == "pi":          # Pi 也只有在交互界面里用 /login 登录（选模型来源、授权或填 API Key）
+        print("即将打开 Pi：请输入 /login 完成登录（选择模型来源并授权），登录成功后输入 /exit 返回。", flush=True)
         return subprocess.run([path]).returncode == 0
     if engine == "deepseek":
         import getpass
@@ -285,6 +311,59 @@ def _dsh_tools_disabled(path):
     return _DSH_CHECKED[path]
 
 
+# Pi：关掉全部可以动文件 / 执行命令的工具，只让它读清单、写判断。
+# --exclude-tools "*" 是最后一道过滤（扩展塞进来的工具也会被关掉），--no-mcp 顺带断开 MCP 服务器；
+# 扩展、项目配置和信任文件一律不加载（--no-extensions / --no-approve / --no-context-files），
+# 每次都在空目录里跑、不留会话。
+PI_TOOLS = ("--no-tools", "--exclude-tools", "*", "--no-mcp", "--no-extensions", "--no-skills",
+            "--no-prompt-templates", "--no-context-files", "--no-approve")
+PI_REQUIRED_FLAGS = ("--no-tools", "--exclude-tools", "--no-mcp", "--no-extensions", "--no-session", "--mode")
+_PI_CHECKED = {}
+
+
+def _pi_tools_disabled(path):
+    """确认这个 pi 认得关工具的开关（Pi 迭代很快，参数一改就拒绝调用，不能让它带着工具去判断）。"""
+    if path not in _PI_CHECKED:
+        p = _run([path, "--no-extensions", "--offline", "--help"], timeout=60)   # 不加载扩展：快，而且核心参数都还在
+        if p.returncode != 0:
+            p = _run([path, "--help"], timeout=120)
+        help_text = p.stdout + p.stderr
+        _PI_CHECKED[path] = p.returncode == 0 and all(f in help_text for f in PI_REQUIRED_FLAGS)
+    return _PI_CHECKED[path]
+
+
+def _pi_reply(stdout):
+    """从 Pi 的 JSONL 事件流里取最后一条助手回复，同时确认这次调用手上确实一个工具都没有。"""
+    text, declared = "", None
+    for line in (stdout or "").splitlines():
+        line = line.strip()
+        if not line.startswith("{"):
+            continue
+        try:
+            ev = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        kind, msg = ev.get("type"), ev.get("message") or {}
+        if kind in ("tool_execution_start", "tool_call"):
+            raise AIError("Pi 的工具没能全部关闭，为安全起见不调用")
+        if kind == "message_update":
+            inner = ev.get("assistantMessageEvent") or {}
+            if inner.get("type") == "error":
+                raise AIError(str(inner.get("error") or inner.get("reason") or "Pi 返回了错误")[:400])
+        elif kind == "message_end" and msg.get("role") == "system":
+            declared = ((msg.get("sections") or {}).get("tools") or "")     # 交给模型看的工具清单
+        elif kind == "message_end" and msg.get("role") == "assistant":
+            if msg.get("stopReason") == "error":
+                raise AIError(str(msg.get("error") or "Pi 返回了错误")[:400])
+            parts = [c.get("text", "") for c in (msg.get("content") or []) if isinstance(c, dict) and c.get("type") == "text"]
+            if "".join(parts).strip():     # 只认最后一条有内容的助手消息
+                text = "".join(parts)
+    if declared is not None and "(none)" not in declared:
+        # 事件流里自报的工具清单：没有 "(none)" 就说明它拿到了工具，哪怕输出看着正常也不能用
+        raise AIError("Pi 带着工具启动了，为安全起见不采用这次结果")
+    return text
+
+
 def _ask_once(engine, path, prompt, model, timeout):
     if engine == "workbuddy":
         # 用纯文本输出：json 模式会带上整段对话（含它自己很长的系统提示），超过约 54KB 时输出被截断
@@ -309,6 +388,18 @@ def _ask_once(engine, path, prompt, model, timeout):
         if p.returncode != 0 or not p.stdout.strip():
             raise AIError((p.stderr or p.stdout)[-400:] or "DeepSeek Harness 没有返回内容")
         return p.stdout
+    if engine == "pi":
+        if not _pi_tools_disabled(path):
+            raise AIError("Pi 的工具没能全部关闭，为安全起见不调用（可能是 pi 版本变化）")
+        cmd = [path, "--print", "--mode", "json", "--no-session", *PI_TOOLS]
+        if model:
+            cmd += ["--model", model]
+        with _tmpdir() as tmp:      # 空目录：读不到别的项目的说明文件
+            p = _run(cmd, input=prompt, timeout=timeout, cwd=tmp)
+        text = _pi_reply(p.stdout)
+        if p.returncode != 0 or not text.strip():
+            raise AIError((p.stderr or p.stdout)[-400:] or "Pi 没有返回内容")
+        return text
     if engine == "claude":
         cmd = [path, "-p", "--output-format", "json", "--max-turns", "1", "--tools", "", "--no-session-persistence"]
         if model:
@@ -356,6 +447,9 @@ def ask(cfg, prompt, timeout=600, log=print):
     try:
         return _ask_once(engine, path, prompt, model, timeout), model
     except AIError as e:
+        if engine == "pi" and model and any(k in str(e).lower() for k in PI_MODEL_ERRORS):
+            log(f"模型 {model} 不可用，改用 Pi 当前的默认模型再试…")
+            return _ask_once(engine, path, prompt, "", timeout), ""
         if engine != "codex" or not any(k in str(e).lower() for k in MODEL_ERRORS):
             raise
         last = e
@@ -373,7 +467,8 @@ def ask(cfg, prompt, timeout=600, log=print):
     raise last
 
 
-_REFUSE = re.compile(r"not logged in|please run /login|unauthorized|invalid api key|authentication[ _]?error", re.I)
+_REFUSE = re.compile(r"not logged in|please run /login|unauthorized|invalid api key|authentication[ _]?error"
+                     r"|no api key found", re.I)
 
 
 def test(cfg, log=print):

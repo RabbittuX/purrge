@@ -2,7 +2,7 @@
 # Purrge 安装脚本：
 #   curl -fsSL https://raw.githubusercontent.com/RabbittuX/purrge/master/install.sh | bash
 #   或者 git clone 后运行：bash install.sh
-# 可选参数：--engine claude|codex  --threshold 15  --yes
+# 可选参数：--engine claude|codex|workbuddy|deepseek|pi  --threshold 15  --yes
 set -e
 [ "$(uname)" = "Darwin" ] || { echo "Purrge 目前只支持 macOS"; exit 1; }
 
