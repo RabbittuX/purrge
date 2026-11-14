@@ -12,9 +12,9 @@
 
 <br><br>
 
-<a href="https://static.yellowrabbit.online/purrge/index.html#download"><img src="https://img.shields.io/badge/%E4%B8%8B%E8%BD%BD%20Mac%20%E5%BA%94%E7%94%A8-%E5%AE%98%E7%BD%91-f0882a?style=for-the-badge&logo=apple&logoColor=white" alt="下载 Mac 应用（官网）" height="40"></a>&nbsp;&nbsp;<a href="#-命令行版"><img src="https://img.shields.io/badge/%E5%AE%89%E8%A3%85%E5%91%BD%E4%BB%A4%E8%A1%8C%E7%89%88-macOS%20%7C%20Windows-1c1b22?style=for-the-badge&logo=gnubash&logoColor=white" alt="安装命令行版" height="40"></a>
+<a href="https://static.yellowrabbit.online/purrge/index.html#download"><img src="https://img.shields.io/badge/%E4%B8%8B%E8%BD%BD%20Mac%20%E5%BA%94%E7%94%A8-%E5%AE%98%E7%BD%91-f0882a?style=for-the-badge&logo=apple&logoColor=white" alt="下载 Mac 应用（官网）" height="40"></a>&nbsp;&nbsp;<a href="https://static.yellowrabbit.online/purrge/index.html#download"><img src="https://img.shields.io/badge/%E4%B8%8B%E8%BD%BD%20Windows%20%E5%BA%94%E7%94%A8-%E5%AE%98%E7%BD%91-f0882a?style=for-the-badge&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI%2BPHBhdGggZmlsbD0id2hpdGUiIGQ9Ik0zIDUuMiAxMC40IDR2Ny4zSDN6TTExLjQgMy45IDIxIDIuNXY4LjhoLTkuNnpNMyAxMi4zaDcuNHY3LjRMMyAxOC42ek0xMS40IDEyLjNIMjF2OS4ybC05LjYtMS40eiIvPjwvc3ZnPg%3D%3D" alt="下载 Windows 应用（官网）" height="40"></a>&nbsp;&nbsp;<a href="#-命令行版"><img src="https://img.shields.io/badge/%E5%AE%89%E8%A3%85%E5%91%BD%E4%BB%A4%E8%A1%8C%E7%89%88-macOS%20%7C%20Windows-1c1b22?style=for-the-badge&logo=gnubash&logoColor=white" alt="安装命令行版" height="40"></a>
 
-<sub><a href="#-mac-应用">Mac 应用</a> · <a href="#-命令行版">命令行版</a> · <a href="#-工作原理">工作原理</a> · <a href="#-安全机制">安全机制</a> · <a href="#-常见问题">常见问题</a> · <a href="https://github.com/RabbittuX/purrge/releases">更新日志</a></sub>
+<sub><a href="#-mac-应用">Mac 应用</a> · <a href="#-windows-应用">Windows 应用</a> · <a href="#-命令行版">命令行版</a> · <a href="#-工作原理">工作原理</a> · <a href="#-安全机制">安全机制</a> · <a href="#-常见问题">常见问题</a> · <a href="https://github.com/RabbittuX/purrge/releases">更新日志</a></sub>
 
 <br><br>
 
@@ -50,15 +50,15 @@
 </tr>
 </table>
 
-Purrge 有两个版本，核心功能相同：
+Purrge 有三个版本，核心功能相同：
 
-| | 🍎 Mac 应用 | 💻 命令行版 |
-|---|---|---|
-| 适合 | 不想用终端，想要图形界面 | 习惯终端，或者在用 Windows |
-| 系统 | macOS 13 及以上（Apple 芯片与 Intel） | macOS、Windows 10 / 11 |
-| 界面 | 菜单栏、桌面悬浮球、应用窗口 | 终端命令 + 浏览器里的审查页 |
-| 安装 | [官网下载](https://static.yellowrabbit.online/purrge/index.html#download) | Homebrew、一键脚本、PowerShell Gallery |
-| 源码 | 暂未开源 | 本仓库（非商业许可） |
+| | 🍎 Mac 应用 | 🪟 Windows 应用 | 💻 命令行版 |
+|---|---|---|---|
+| 适合 | 不想用终端，想要图形界面 | 不想用终端，想要图形界面 | 习惯用终端 |
+| 系统 | macOS 13 及以上（Apple 芯片与 Intel） | Windows 10 / 11（64 位） | macOS、Windows 10 / 11 |
+| 界面 | 菜单栏、桌面悬浮球、应用窗口 | 任务栏托盘、桌面悬浮球、应用窗口 | 终端命令 + 浏览器里的审查页 |
+| 安装 | [官网下载](https://static.yellowrabbit.online/purrge/index.html#download) | [官网下载](https://static.yellowrabbit.online/purrge/index.html#download)（免安装，解压即用） | Homebrew、一键脚本、PowerShell Gallery |
+| 源码 | 暂未开源 | 暂未开源 | 本仓库（非商业许可） |
 
 ## 🍎 Mac 应用
 
@@ -124,6 +124,47 @@ Purrge 有两个版本，核心功能相同：
 > - 安装包**只在官网发布**，GitHub 上不提供下载；其他地方的同名安装包请不要安装。
 > - Mac 应用目前没有开源，本仓库是命令行版（macOS / Windows）的源码。
 > - 第一次打开时 macOS 会提示「无法验证开发者」，下载时官网会显示「安装必读」，按步骤允许一次即可。
+
+## 🪟 Windows 应用
+
+<sub>1.1 新发布</sub>
+
+Purrge for Windows 和 Mac 应用功能一致，界面相同，下载解压就能用：
+
+<table>
+<tr>
+<td width="50%" valign="top">
+**🖥️ 任务栏托盘 + 桌面悬浮球**<br><sub>扫描和 AI 判断的进度随时看得到，空间不够时悬浮球亮起提醒</sub>
+</td>
+<td width="50%" valign="top">
+**🛡️ 守护**<br><sub>后台定时检查剩余空间，每次检查和扫描都有记录；清理的文件默认移到回收站</sub>
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+**🧠 在应用里切换 AI**<br><sub>Claude Code、Codex、WorkBuddy、DeepSeek，安装和登录都在应用里完成</sub>
+</td>
+<td width="50%" valign="top">
+**📶 实时网速与带宽测速**<br><sub>悬浮球显示上传、下载速度和网络状态，一键测出最大下载、上传速度和满载延迟</sub>
+</td>
+</tr>
+</table>
+
+### 下载
+
+<div align="center">
+
+<a href="https://static.yellowrabbit.online/purrge/index.html#download"><img src="https://img.shields.io/badge/%E4%B8%8B%E8%BD%BD%20Windows%20%E5%BA%94%E7%94%A8-%E5%AE%98%E7%BD%91-f0882a?style=for-the-badge&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI%2BPHBhdGggZmlsbD0id2hpdGUiIGQ9Ik0zIDUuMiAxMC40IDR2Ny4zSDN6TTExLjQgMy45IDIxIDIuNXY4LjhoLTkuNnpNMyAxMi4zaDcuNHY3LjRMMyAxOC42ek0xMS40IDEyLjNIMjF2OS4ybC05LjYtMS40eiIvPjwvc3ZnPg%3D%3D" alt="前往官网下载 Windows 应用" height="40"></a>
+
+<sub>Windows 10 / 11 · 64 位 · 免安装 · 不收费</sub>
+
+</div>
+
+> [!NOTE]
+> - 安装包**只在官网发布**，GitHub 上不提供下载；其他地方的同名安装包请不要安装。
+> - Windows 应用目前没有开源。
+> - 下载的是 zip 压缩包：右键「全部解压缩」后双击 `Purrge.exe`，不要在压缩包里直接运行。
+> - 第一次打开时会提示「Windows 已保护你的电脑」，点「更多信息」→「仍要运行」即可，之后不会再问。下载时官网会显示「安装必读」。
 
 ## 💻 命令行版
 
@@ -380,9 +421,9 @@ purrge uninstall --purge   # 同时删除设置、扫描记录以及 Purrge 自�
 ## ❓ 常见问题
 
 <details>
-<summary><b>Mac 应用和命令行版能一起装吗？</b></summary>
+<summary><b>应用（Mac / Windows）和命令行版能一起装吗？</b></summary>
 
-可以，两者共用同一份设置和扫描记录。为避免重复提醒，Mac 应用打开后会询问是否改由应用负责后台检查；`purrge` 命令照常可用。
+可以，两者共用同一份设置和扫描记录。为避免重复提醒，应用打开后会询问是否改由应用负责后台检查；`purrge` 命令照常可用。
 
 </details>
 
