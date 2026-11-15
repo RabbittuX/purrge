@@ -26,15 +26,17 @@ DEFAULT_CONFIG = {
     "optionalAction": "trash",  # "需你决定"的项目：trash=移到废纸篓（可找回）delete=直接删除
     "protect": [],              # 额外的保护路径（永不清理）
     "scanDirs": [],             # 额外扫描大文件 / 大文件夹的目录，比如 D:\\项目（只会列为「需要你决定」）
-    "aiEngine": "",             # claude / codex，安装时选择；留空 = 只用规则判断
+    "aiEngine": "",             # claude / codex / workbuddy / deepseek / pi，安装时选择；留空 = 只用规则判断
     "claudePath": "",           # 安装时自动探测
     "codexPath": "",
     "claudeModel": "",          # 留空用默认模型
     "codexModel": "",
     "workbuddyPath": "",
     "deepseekPath": "",
+    "piPath": "",
     "workbuddyModel": "",       # 留空用 CodeBuddy 默认模型
     "deepseekModel": "",           # 留空用默认模型；不可用时自动换成账号能用的模型
+    "piModel": "",              # 留空用 Pi 当前的默认模型；不可用时自动退回默认模型
     "language": "zh",
 }
 

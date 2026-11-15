@@ -1,4 +1,4 @@
-"""Node.js：WorkBuddy / DeepSeek（以及 Windows 上的 Codex）的命令行要用 npm 安装。
+"""Node.js：WorkBuddy / DeepSeek / Pi（以及 Windows 上的 Codex）的命令行要用 npm 安装。
 电脑上已经有 npm 就直接用，什么都不改；没有时（征得同意后）自动装一份：
   从 nodejs.org 下载官方 LTS 压缩包，核对官方 SHA256 后解压到 ~/.purrge/node，只给 Purrge 用，不改系统、不需要管理员权限。
   不用 Homebrew / winget：前者在不再提供预编译包的 macOS 上会从源码编译并升级其他软件，后者装 Node 需要管理员权限。"""

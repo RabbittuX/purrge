@@ -1,4 +1,4 @@
-"""交互式安装：选 AI 引擎（Claude Code / Codex / WorkBuddy / DeepSeek）→ 缺 Node.js 时自动安装 → 检查安装 → 检查登录 → 测试连接 → 设阈值 → 注册后台监控。
+"""交互式安装：选 AI 引擎（Claude Code / Codex / WorkBuddy / DeepSeek / Pi）→ 缺 Node.js 时自动安装 → 检查安装 → 检查登录 → 测试连接 → 设阈值 → 注册后台监控。
 用 /dev/tty 读输入，所以 `curl ... | bash` 方式运行也能正常提问。"""
 import os
 import shutil
@@ -14,8 +14,9 @@ INSTALLED_APP = DG_HOME / "app"
 CLI_LINK = Path.home() / ".local/bin/purrge"
 WIN_CLI = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData/Local")) / "Microsoft/WindowsApps/purrge.cmd"
 SKILL_DIRS = {"claude": Path.home() / ".claude/skills/purrge", "codex": Path.home() / ".codex/skills/purrge",
-              "workbuddy": Path.home() / ".codebuddy/skills/purrge"}
-ENGINE_ORDER = ("claude", "codex", "workbuddy", "deepseek")   # 安装时的选项顺序；1、2 与旧版一致
+              "workbuddy": Path.home() / ".codebuddy/skills/purrge",
+              "pi": Path.home() / ".pi/agent/skills/purrge"}   # Pi 的用户级技能目录是 ~/.pi/agent/skills
+ENGINE_ORDER = ("claude", "codex", "workbuddy", "deepseek", "pi")   # 安装时的选项顺序；1、2 与旧版一致，新引擎排在后面
 
 B, D, G, Y, R, X = "\033[1m", "\033[2m", "\033[32m", "\033[33m", "\033[31m", "\033[0m"
 
@@ -77,11 +78,13 @@ def has_tty():
 
 
 def caller_engine():
-    """被 Claude Code / Codex 代为运行时，它们会在环境变量里留下标记。"""
+    """被 Claude Code / Codex / Pi 代为运行时，它们会在环境变量里留下标记。"""
     if os.environ.get("CLAUDECODE"):
         return "claude"
     if os.environ.get("CODEX_THREAD_ID") or os.environ.get("CODEX_SESSION_ID"):
         return "codex"
+    if os.environ.get("PI_CODING_AGENT") or os.environ.get("PI_SESSION_ID"):
+        return "pi"
     return None
 
 
@@ -94,18 +97,18 @@ def choose_engine(args):
         if eng:
             ok(f"检测到由 {engines.NAMES[eng]} 代为安装，就用 {engines.NAMES[eng]} 来做判断")
             return eng
-        for e in ("claude", "codex"):
+        for e in ENGINE_ORDER:
             p = engines.find(e)
             if p and engines.logged_in(e, p):
                 ok(f"自动选择已登录的 {engines.NAMES[e]}")
                 return e
-        fail("没有可交互的终端，也没找到已登录的 Claude Code / Codex。请加参数：--engine claude 或 --engine codex")
+        fail("没有可交互的终端，也没找到正在使用的 AI 命令行。请加参数：--engine claude / codex / workbuddy / deepseek / pi")
     say(f"\n{B}Purrge 用哪个 AI 来判断哪些东西能清理？{X}")
     for i, e in enumerate(ENGINE_ORDER, 1):
         p = engines.find(e)
         state = f"{G}已安装 {engines.version_text(p)}{X}" if p else f"{D}未安装，会自动安装最新版{X}"
         say(f"  {i}) {engines.NAMES[e]:<17} {state}")
-    ans = (ask("请输入 1～4 [1]：", "1") or "1").strip().lower()
+    ans = (ask(f"请输入 1～{len(ENGINE_ORDER)} [1]：", "1") or "1").strip().lower()
     if ans in ENGINE_ORDER:
         return ans
     return ENGINE_ORDER[int(ans) - 1] if ans.isdigit() and 1 <= int(ans) <= len(ENGINE_ORDER) else "claude"
@@ -148,6 +151,8 @@ def connect(cfg, engine, path):
         low = err.lower()
     if not good and engine == "workbuddy" and not has_tty():   # CodeBuddy 只能在交互界面登录，没有终端时拉起会卡住
         warn("WorkBuddy 还没登录：请在终端运行 codebuddy，输入 /login 登录后，再运行 purrge engine workbuddy")
+    elif not good and engine == "pi" and not has_tty():        # Pi 的登录同样只能在交互界面里做
+        warn("Pi 还没登录：请在终端运行 pi，输入 /login 选择模型来源并授权，然后运行 purrge engine pi")
     elif not good and any(k in low for k in ("login", "log in", "auth", "401", "unauthorized", "api key")):
         warn(f"{name} 需要重新登录，正在打开登录页面…")
         engines.login(engine, cfg[f"{engine}Path"])
@@ -254,7 +259,7 @@ def cmd_install(args):
     say(f"\n{G}{B}安装完成！{X}常用命令：")
     say("  purrge scan        立即扫描，完成后自动打开审查页")
     say("  purrge status      查看剩余空间和监控状态")
-    say("  purrge engine      查看或切换 AI（claude / codex / workbuddy / deepseek）")
+    say("  purrge engine      查看或切换 AI（claude / codex / workbuddy / deepseek / pi）")
     say("  purrge uninstall   关闭后台监控")
     if "--yes" not in args and (ask("\n现在就扫描一次吗？[y/N]：", "n") or "n").lower() in ("y", "yes", "是"):
         from dg import cmd_run
@@ -268,11 +273,11 @@ def cmd_engine(args):
         e = cfg.get("aiEngine")
         say(f"当前 AI：{engines.NAMES.get(e, '未设置（只用规则判断）')}"
             + (f"，模型 {cfg.get(e + 'Model') or '默认'}，路径 {cfg.get(e + 'Path')}" if e in engines.NAMES else ""))
-        say("切换：purrge engine claude | codex | workbuddy | deepseek")
+        say("切换：purrge engine claude | codex | workbuddy | deepseek | pi")
         return
     engine = args[0].lower()
     if engine not in engines.NAMES:
-        fail("只支持 claude、codex、workbuddy、deepseek")
+        fail("只支持 claude、codex、workbuddy、deepseek、pi")
     apply_engine(cfg, engine)
     save_config(cfg)
     install_monitor(cfg)

@@ -1,5 +1,5 @@
 """AI 判断：读 candidates.json，给每项定档（首要清理 / 需你决定 / 不清理）并写一句中文说明 → review.json。
-AI 引擎可以是 Claude Code、Codex、WorkBuddy 或 DeepSeek Harness（见 engines.py），都只读、不能执行删除；AI 不可用时按知识库规则兜底。"""
+AI 引擎可以是 Claude Code、Codex、WorkBuddy、DeepSeek Harness 或 Pi（见 engines.py），都只读、不能执行删除；AI 不可用时按知识库规则兜底。"""
 import json
 import re
 import sys
